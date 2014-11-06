@@ -99,13 +99,20 @@ SOFTWARE. -->
         # Dynamic attributes
         @updateObject()
 
+        # Attach the object to the DOM
+        @object.$init = true;
+        @sprite.el.appendChild(@object)
+
 	# For inline data, write it to @inline and insert into dom when the
         # object is loaded. Strip off comment tags, if present
         if @inline
           @inline = @inline.trim()
           # Remove comments. Comments are used to prevent compile errors
           match = new RegExp(/^\s*\<\!--(.*)--\>\s*$/).exec(@inline);
-          @inline = match[1] if !!match
+          if !!match
+            @inline = match[1]
+            console.log("attaching inline", @inline)
+            @object.appendChild(@inline)
 
         # Fire event when the object is loaded, and then generate onload
         _this = this
@@ -113,9 +120,6 @@ SOFTWARE. -->
           _this.object_loaded()
           _this.sendEvent('load')
           
-        # Attach the object to the DOM
-        @object.$init = true;
-        @sprite.el.appendChild(@object)
       </method>
 
       <method name="updateObject">
