@@ -99,9 +99,11 @@ SOFTWARE. -->
         # Dynamic attributes
         @updateObject()
 
-        # Attach the object to the DOM
-        @object.$init = true;
-        @sprite.el.appendChild(@object)
+        # Fire event when the object is loaded, and then generate onload
+        _this = this
+        @object.addEventListener 'load', (e) =>
+          _this.object_loaded()
+          _this.sendEvent('load')
 
 	# For inline data, write it to @inline and insert into dom when the
         # object is loaded. Strip off comment tags, if present
@@ -111,15 +113,11 @@ SOFTWARE. -->
           match = new RegExp(/^\s*\<\!--(.*)--\>\s*$/).exec(@inline);
           if !!match
             @inline = match[1]
-            console.log("attaching inline", @inline)
-            @object.appendChild(@inline)
 
-        # Fire event when the object is loaded, and then generate onload
-        _this = this
-        @object.addEventListener 'load', (e) =>
-          _this.object_loaded()
-          _this.sendEvent('load')
-          
+        # Attach the object to the DOM
+        @object.$init = true;
+        @sprite.el.appendChild(@object)
+         
       </method>
 
       <method name="updateObject">
