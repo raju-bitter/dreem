@@ -63,6 +63,8 @@ SOFTWARE. -->
       <attribute name="type" value="" type="string"></attribute>
       <handler event="ontype" method="updateObject"></handler>
 
+      <attribute name="inline" value="false" type="boolean"></attribute>
+
       <method name="getDom">
         return if !@object
         return @object.contentDocument
@@ -70,20 +72,70 @@ SOFTWARE. -->
 
       <handler event="oninit">
         # Retrieve the entire inline contents
-        @inline = @sprite.getText()
-        @sprite.setText('')
+        if @inline
+          @inline_data = @sprite.getText()
+          @sprite.setText('')
 
         @createObject()
       </handler>
 
+      <method name="object_add_inline" args="inline">
+        # Add inline svg (or whatever) to the object
+        dom = @getDom()
+        return if !dom
+       
+        console.log('add to inlin', dom, inline)
+        $(dom).contents().html(inline)
+
+        # Don't use jquery because the kernel redefines .css
+        body = $(dom).contents().find('body')[0]
+        body.style.overflow = 'hidden' if body
+      </method>
+
+      <method name="object_add_el" args="el">
+        # Add element to the object
+        dom = @getDom()
+        return if !dom
+       
+        body = $(dom).contents().find('body')
+        body.appendChild(el)
+
+        # Don't use jquery because the kernel redefines .css
+        body[0].style.overflow = 'hidden' if body
+      </method>
+
+      <method name="object_body">
+        # Return the body of the embedded object
+        dom = @getDom()
+        return if !dom
+       
+        console.log('dom', dom)
+        console.log('dom nodetype', dom)
+        console.log('dom obj', $(dom)[0])
+
+        console.log('body', dom.getElementByTagName('body'))
+        console.log('document', dom.document)
+        console.log('node', $(dom))
+        console.log('find', $(dom).contents().find('body'))
+        
+        
+        return $(dom)[0]
+        #return $(dom).contents().find('body')
+        return $(dom).contents()
+      </method>
+   
+
       <method name="object_loaded">
         # Write the object inline if specified
+        # Strip off comment tags, if present
         if @inline
-          object_dom = @object.contentDocument
-          $(object_dom).contents().html(@inline)
-          # Don't use jquery because the kernel redefines .css
-          body = $(object_dom).contents().find('body')[0]
-          body.style.overflow = 'hidden' if body
+          @inline_data = @inline_data.trim()
+          # Remove comments. Comments are used to prevent compile errors
+          match = new RegExp(/^\s*\<\!--(.*)--\>\s*$/).exec(@inline_data);
+          if !!match
+            @inline_data = match[1]
+
+          @object_add_inline(@inline_data)
       </method>
 
       <method name="createObject">
@@ -105,14 +157,6 @@ SOFTWARE. -->
           _this.object_loaded()
           _this.sendEvent('load')
 
-	# For inline data, write it to @inline and insert into dom when the
-        # object is loaded. Strip off comment tags, if present
-        if @inline
-          @inline = @inline.trim()
-          # Remove comments. Comments are used to prevent compile errors
-          match = new RegExp(/^\s*\<\!--(.*)--\>\s*$/).exec(@inline);
-          if !!match
-            @inline = match[1]
 
         # Attach the object to the DOM
         @object.$init = true;

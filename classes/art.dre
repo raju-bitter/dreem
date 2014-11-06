@@ -31,18 +31,217 @@ SOFTWARE. -->
      *     <art data="/images/cursorshapes.svg" type="image/svg+xml" width="100" height="100" x="10" y="10"></art>
      *
      */-->    
-    <class name="art" type="coffee" extends="abstractart">
-      <handler event="onload" method="resizeToView"></handler>
-
       <!--/**
         * @method resizeToView
         * Modify the embedded svg object to use the size of the view.
         * Called in response to the onload event.
         */-->
+
+    <class name="art" type="coffee" extends="abstractart" scriptincludes="/lib/snap.svg-min.js">
+      <handler event="onload" method="resizeToView"></handler>
+
+      <method name="hide_all_art">
+        dom = @getDom()
+        return if !dom
+
+        # Set display: none for each 'g' element (under an svg tag)
+        elements = $(dom).find('g')
+        for g, index in elements
+          parent_tag = $(g).parent().prop('tagName')
+          g.setAttribute('display', 'none') if parent_tag == 'svg'
+      </method>
+
+      <method name="show_all_art">
+        dom = @getDom()
+        return if !dom
+
+        # Set display: inline for each 'g' element (under an svg tag)
+        elements = $(dom).find('g')
+        for g, index in elements
+          parent_tag = $(g).parent().prop('tagName')
+          g.setAttribute('display', 'inline') if parent_tag == 'svg'
+      </method>
+
+      <method name="hide_art" args="index">
+        # Hide the art at the specified index (0-based)
+        dom = @getDom()
+        return if !dom
+
+        # Set display: none for one 'g' element
+        element = $(dom).find('svg > g').get(index)
+        element.setAttribute('display', 'none') if element
+      </method>
+
+      <method name="show_art" args="index">
+        # Show the art at the specified index (0-based)
+        dom = @getDom()
+        return if !dom
+
+        # Set display: inline for one 'g' element
+        element = $(dom).find('svg > g').get(index)
+        console.log('show_art', element)
+        element.setAttribute('display', 'inline') if element
+      </method>
+
+      <method name="hide_named_art" args="name">
+        # Hide the art by name
+        dom = @getDom()
+        return if !dom
+
+        # Set display: none for one 'g' element
+        element = $(dom).find('g#'+name).get(0)
+        element.setAttribute('display', 'none') if element
+      </method>
+
+      <method name="show_named_art" args="name">
+        # Show the art using a named index
+        dom = @getDom()
+        return if !dom
+
+        # Set display: inline for one 'g' element
+        element = $(dom).find('g#'+name)[0]
+        console.log('show_art', element)
+        element.setAttribute('display', 'inline') if element
+      </method>
+
+      <method name="hide_static_art">
+        # Hide static art so it can be animated
+        return if !@object
+        $(@object).hide()
+      </method>
+
+      <method name="get_path" args="name">
+        # Read the path information from the svg
+        dom = @getDom()
+        return null if !dom
+
+        path = $(dom).find('g#'+name).find('path')
+        return path
+      </method>
+
+      <method name="get_paths">
+        # Get every path specified in the svg
+        dom = @getDom()
+        return null if !dom
+
+        paths = $(dom).find('g').find('path')
+        return paths
+      </method>
+
+      <method name="get_bounding_box">
+        # Get the bounding box of all the paths
+        paths = @get_paths()
+        for path, index in paths
+          box = path.getBBox()
+          if !rect
+            rect = box
+            x1 = box.x + box.width
+            y1 = box.y + box.height
+          else
+            rect.x = Math.min(rect.x, box.x)
+            rect.y = Math.min(rect.y, box.y)
+            x1 = Math.max(x1, box.x + box.width)
+            y1 = Math.max(y1, box.y + box.height)
+          console.log(box.x, box.y, x1, y1)
+        rect.width = x1 - rect.x
+        rect.height = y1 - rect.y
+
+        return rect
+      </method>
+
+      <method name="build_snap">
+        # Build a snap object from the svg
+        # Set the size to match the union of all paths
+
+        @snap = Snap()
+
+        # Create a div to handle resizing of the svg
+        @div = document.createElement('div')
+        @div.setAttribute('style', 'overflow: hidden; width: 100%; height: 100%')
+        @sprite.el.appendChild(@div)
+
+        @snap.appendTo(@div)
+
+        # Set the viewBox to the bounding box of all paths
+        rect = @get_bounding_box()
+        viewbox = rect.x + ' ' + rect.y + ' ' + rect.width + ' ' + rect.height
+        @snap.attr({viewBox: viewbox})
+
+        # Hide the static svg object
+        @hide_static_art()
+      </method>
+
+
+      <method name="show_path" args="name">
+        # Show a path given its name
+        path = @get_path(name)
+        console.log('path=', path)
+        if path
+          d1 = path[0].getAttribute('d')
+          @build_snap() if !@snap
+          @path = @snap.path(d1)
+      </method>
+
+      <method name="animate_path" args="name,msec,bounce">
+        return show_path(name) if !@snap
+
+        msec = 1000 if !msec
+        bounce = mina.bounce if !bounce
+
+        # Animate to a given path, by name
+        path = @get_path(name)
+        if path
+          d1 = path[0].getAttribute('d')
+          @path.animate({d: d1}, msec, bounce)
+      </method>
+
+ 
+
+      <method name="morph_paths" args="name1,name2">
+        # Animate between two paths using snapsvg
+        path1 = @get_path(name1)
+        path2 = @get_path(name2)
+
+        d1 = path1[0].getAttribute('d')
+        d2 = path2[0].getAttribute('d')
+
+        if !@snap
+          @build_snap()
+
+          @forward = true
+          @path = @snap.path(d1)
+          console.log('snap', @snap.getBBox())
+          console.log('path', @path, @path.getBBox())
+
+
+        if @forward
+          #console.log("forward")
+          @path.animate({d: d2}, 1000, mina.bounce)
+        else
+          #console.log("backwards")
+          @path.animate({d: d1}, 1000, mina.bounce)
+        @forward = !@forward
+
+      </method>
+
+      <handler event="onwidth" method="handleDivResize"></handler>
+      <handler event="onheight" method="handleDivResize"></handler>
+      <method name="handleDivResize">
+        if @div
+          @div.style.width = @width;
+          @div.style.height = @height;
+      </method>
+
+
+      <method name="test">
+        @morph_paths('circle', 'roundrect')
+      </method>
+
+
       <method name="resizeToView">
         dom = @getDom()
         return if !dom
-        
+
         # Find every svg and modify width/height to be 100%.
         # This only runs once per svg
         elements = $(dom).find('svg')
@@ -69,3 +268,4 @@ SOFTWARE. -->
       </method>
 
     </class>
+
