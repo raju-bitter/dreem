@@ -71,6 +71,22 @@
      * @extends dr.abstractart
      * Vector graphics support using svg.
      *
+     * This example shows how to include some svg art inline
+     *
+     *     @example
+     *     <art data="/images/cursorshapes.svg" type="image/svg+xml" width="100" height="100" x="10" y="10"></art>
+     *
+     */
+/**
+        * @method resizeToView
+        * Modify the embedded svg object to use the size of the view.
+        * Called in response to the onload event.
+        */
+/**
+     * @class dr.art
+     * @extends dr.abstractart
+     * Vector graphics support using svg.
+     *
      *
      */
 /**
