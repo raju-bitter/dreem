@@ -134,7 +134,7 @@ SOFTWARE. -->
         for path, index in paths
           box = path.getBBox()
           if !rect
-            rect = box
+            rect = jQuery.extend({}, box)   # clone so IE doesn't error
             x1 = box.x + box.width
             y1 = box.y + box.height
           else
@@ -175,7 +175,6 @@ SOFTWARE. -->
       <method name="show_path" args="name">
         # Show a path given its name
         path = @get_path(name)
-        console.log('path=', path)
         if path
           d1 = path[0].getAttribute('d')
           @build_snap() if !@snap
@@ -203,29 +202,9 @@ SOFTWARE. -->
 
       <method name="morph_paths" args="name1,name2">
         # Animate between two paths using snapsvg
-        path1 = @get_path(name1)
-        path2 = @get_path(name2)
-
-        d1 = path1[0].getAttribute('d')
-        d2 = path2[0].getAttribute('d')
-
-        if !@snap
-          @build_snap()
-
-          @forward = true
-          @path = @snap.path(d1)
-          console.log('snap', @snap.getBBox())
-          console.log('path', @path, @path.getBBox())
-
-
-        if @forward
-          #console.log("forward")
-          @path.animate({d: d2}, 1000, mina.bounce)
-        else
-          #console.log("backwards")
-          @path.animate({d: d1}, 1000, mina.bounce)
-        @forward = !@forward
-
+        # I intend to remove this
+        @show_path(name1)
+        @animate_path(name2)
       </method>
 
       <handler event="onwidth" method="handleDivResize"></handler>
@@ -234,11 +213,6 @@ SOFTWARE. -->
         if @div
           @div.style.width = @width;
           @div.style.height = @height;
-      </method>
-
-
-      <method name="test">
-        @morph_paths('circle', 'roundrect')
       </method>
 
 

@@ -84,46 +84,12 @@ SOFTWARE. -->
         dom = @getDom()
         return if !dom
        
-        console.log('add to inlin', dom, inline)
         $(dom).contents().html(inline)
 
         # Don't use jquery because the kernel redefines .css
         body = $(dom).contents().find('body')[0]
         body.style.overflow = 'hidden' if body
       </method>
-
-      <method name="object_add_el" args="el">
-        # Add element to the object
-        dom = @getDom()
-        return if !dom
-       
-        body = $(dom).contents().find('body')
-        body.appendChild(el)
-
-        # Don't use jquery because the kernel redefines .css
-        body[0].style.overflow = 'hidden' if body
-      </method>
-
-      <method name="object_body">
-        # Return the body of the embedded object
-        dom = @getDom()
-        return if !dom
-       
-        console.log('dom', dom)
-        console.log('dom nodetype', dom)
-        console.log('dom obj', $(dom)[0])
-
-        console.log('body', dom.getElementByTagName('body'))
-        console.log('document', dom.document)
-        console.log('node', $(dom))
-        console.log('find', $(dom).contents().find('body'))
-        
-        
-        return $(dom)[0]
-        #return $(dom).contents().find('body')
-        return $(dom).contents()
-      </method>
-   
 
       <method name="object_loaded">
         # Write the object inline if specified
@@ -136,6 +102,8 @@ SOFTWARE. -->
             @inline_data = match[1]
 
           @object_add_inline(@inline_data)
+
+        @sendEvent('load')
       </method>
 
       <method name="createObject">
@@ -152,20 +120,20 @@ SOFTWARE. -->
         @updateObject()
 
         # Fire event when the object is loaded, and then generate onload
-        _this = this
-        @object.addEventListener 'load', (e) =>
-          _this.object_loaded()
-          _this.sendEvent('load')
-
+        @object.addEventListener 'load', @object_loaded
 
         # Attach the object to the DOM
         @object.$init = true;
         @sprite.el.appendChild(@object)
-         
       </method>
 
       <method name="updateObject">
         return if (@width == 0 || @height == 0 || !@object)
+
+        # This makes inline elements work for firefox
+        if @inline
+          @data = 'about:blank'
+          @type = 'image/svg+xml'
 
         @object.setAttribute('type', @type) unless @object.type == @type
         @object.setAttribute('data', @data) unless @object.data == @data
