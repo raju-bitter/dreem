@@ -9,20 +9,27 @@
 </head>
 <body>
 <view id="all" width="100%" height="100%" clip="true">
-  <class name="text3" width="${this.label.width}" height="${this.label.height}" bgcolor="#808080">
-    <text name="label" text="${this.parent.text}"></text>
-  </class>
-
-  <text3 id="foo" text="text3 object">
+  
+  <!-- Oninit fires after children have been inited -->
+  <!-- Here when the container has no "special" children (attributes, handlers, methods, etc) -->
+  <view id="container">
+    <view id="sub">
+      <handler event="oninit">
+        assert.equal(false, !!container.inited)
+      </handler>
+    </view>
+  </view>
+  <!-- Here when the container has "special" children (attributes, handlers, methods, etc) and regular (view, node, etc) children -->
+  <view id="container2">
+    <view id="sub2">
+      <handler event="oninit">
+        assert.equal(false, !!container2.inited)
+      </handler>
+    </view>
     <handler event="oninit">
-      // console.log("oninit", this.label);
-      assert.equal(this.label.text, 'text3 object');
+      assert.equal(true, !!sub2.inited)
     </handler>
-  </text3>
-  <handler event="oninit">
-    // console.log("oninit", foo.label);
-    assert.equal(foo.label.text, 'text3 object');
-  </handler>
+  </view>
 </view>
 <!-- The MIT License (MIT)
 

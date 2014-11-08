@@ -1,6 +1,13 @@
 <html>
 <head>
-  <title>rhes.es</title>
+  <style type="text/css">
+    body {
+      font-family: 'Helvetica';
+      font-size: 14px;
+    }
+  </style>
+
+  <title>rhes.es - Text Component Smoke Tests</title>
   <script type="text/javascript" src="/lib/jquery-1.9.1.min.js"></script>
   <script type="text/javascript" src="/lib/acorn.js"></script>
   <script type="text/javascript" src="/lib/coffee-script.js"></script>
@@ -8,14 +15,19 @@
   <script type="text/javascript" src="/layout.js"></script>
 </head>
 <body>
-<view id="all" width="100%" height="100%">
-	<simplelayout></simplelayout>
-	<replicator id="repl" classname="text" data="['a',1,'b',2,'c',3,4,5]" filterexpression="\d"></replicator>
-	<handler event="oninit">
-		assert.deepEqual(repl.data, [1,2,3,4,5]);
-		repl.setAttribute('filterexpression', '[^\\d]');
-		assert.deepEqual(repl.data, ['a','b','c']);
-	</handler>
+<view id="all" width="100%" height="100%" clip="true">
+
+  <simplelayout axis="y"></simplelayout>
+
+  <!-- Setting text values, see text.html for more text tests -->
+  <labelbutton width="100" height="30">
+    <handler event="oninit">
+      assert.equal(this.text, undefined)
+      assert.equal(this.label.text, undefined)
+      assert.equal(this.label.sprite.el.innerText, '')
+    </handler>
+  </labelbutton>
+
 </view>
 <!-- The MIT License (MIT)
 

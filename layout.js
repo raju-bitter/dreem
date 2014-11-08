@@ -351,6 +351,8 @@
             return;
           }
           value = typemappings[type](value);
+        } else if (value == null) {
+          value = '';
         }
         return value;
       };
@@ -653,26 +655,26 @@
     Node = (function(_super) {
 
       /**
-       * @cfg {String} name 
+       * @cfg {String} name
        * Names this node in its parent scope so it can be referred to later.
        */
 
       /**
-       * @cfg {String} id 
+       * @cfg {String} id
        * Gives this node a global ID, which can be looked up in the global window object.
        * Take care to not override builtin globals, or override your own instances!
        */
 
       /**
-       * @cfg {String} scriptincludes 
+       * @cfg {String} scriptincludes
        * A comma separated list of URLs to javascript includes required as dependencies. Useful if you need to ensure a third party library is available.
        */
 
       /**
-       * @cfg {String} scriptincludeserror 
+       * @cfg {String} scriptincludeserror
        * An error to show if scriptincludes fail to load
        */
-      var earlyattributes, matchConstraint, _eventCallback, _installMethod;
+      var earlyattributes, lateattributes, matchConstraint, _eventCallback, _installMethod;
 
       __extends(Node, _super);
 
@@ -680,8 +682,10 @@
 
       earlyattributes = ['parent', 'name'];
 
+      lateattributes = ['data'];
+
       function Node(el, attributes) {
-        var args, deferbindings, ev, method, name, reference, script, skiponinit, value, _i, _j, _len, _len1, _ref, _ref1, _ref2;
+        var args, deferbindings, ev, method, name, reference, script, skiponinit, value, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2;
         if (attributes == null) {
           attributes = {};
         }
@@ -730,14 +734,21 @@
         }
         for (_j = 0, _len1 = earlyattributes.length; _j < _len1; _j++) {
           name = earlyattributes[_j];
-          if (attributes[name]) {
+          if (name in attributes) {
             this.setAttribute(name, attributes[name]);
           }
         }
         for (name in attributes) {
           value = attributes[name];
-          if (__indexOf.call(earlyattributes, name) < 0) {
-            this.bindAttribute(name, value, attributes.$tagname);
+          if (__indexOf.call(lateattributes, name) >= 0 || __indexOf.call(earlyattributes, name) >= 0) {
+            continue;
+          }
+          this.bindAttribute(name, value, attributes.$tagname);
+        }
+        for (_k = 0, _len2 = lateattributes.length; _k < _len2; _k++) {
+          name = lateattributes[_k];
+          if (name in attributes) {
+            this.bindAttribute(name, attributes[name], attributes.$tagname);
           }
         }
         if (this.constraints) {
@@ -948,23 +959,42 @@
       };
 
       Node.prototype._bindHandlers = function(isLate) {
-        var binding, bindings, callback, ev, name, reference, refeval, scope, _i, _len;
+        var binding, bindings, callback, defer, ev, name, reference, refeval, scope, _i, _len;
         bindings = isLate ? this.latehandlers : this.handlers;
         if (!bindings) {
           return;
         }
+        defer = [];
         for (_i = 0, _len = bindings.length; _i < _len; _i++) {
           binding = bindings[_i];
           scope = binding.scope, name = binding.name, ev = binding.ev, callback = binding.callback, reference = binding.reference;
           if (reference) {
             refeval = this._valueLookup(reference)();
-            scope.listenTo(refeval, ev, callback);
+            if (refeval instanceof Eventable) {
+              scope.listenTo(refeval, ev, callback);
+            } else {
+              defer.push(binding);
+              continue;
+            }
           } else {
             scope.bind(ev, callback);
             if (scope[ev]) {
               scope.sendEvent(ev, scope[ev]);
             }
           }
+        }
+        if (defer.length) {
+          if (isLate) {
+            this.latehandlers = defer;
+          } else {
+            this.handlers = defer;
+          }
+          setTimeout((function(_this) {
+            return function() {
+              return _this._bindHandlers(isLate);
+            };
+          })(this), 0);
+          return;
         }
         if (isLate) {
           this.latehandlers = [];
@@ -987,7 +1017,7 @@
           parent.subnodes.push(this);
 
           /**
-           * @event onsubnodes 
+           * @event onsubnodes
            * Fired when this node's subnodes array has changed
            * @param {dr.node} node The dr.node that fired the event
            */
@@ -1054,7 +1084,7 @@
       Node.prototype.destroy = function(skipevents) {
 
         /**
-         * @event ondestroy 
+         * @event ondestroy
          * Fired when this node and all its children are about to be destroyed
          * @param {dr.node} node The dr.node that fired the event
          */
@@ -1214,7 +1244,8 @@
       };
 
       Sprite.prototype.set_clickable = function(clickable) {
-        this.setStyle('pointer-events', (clickable ? 'auto' : 'none'), true);
+        this.__clickable = clickable;
+        this.__updatePointerEvents();
         this.setStyle('cursor', (clickable ? 'pointer' : ''), true);
         if (capabilities.touch) {
           document.addEventListener('touchstart', this.touchHandler, true);
@@ -1224,13 +1255,28 @@
         }
       };
 
+      Sprite.prototype.set_clip = function(clip) {
+        this.__clip = clip;
+        return this.__updateOverflow();
+      };
+
+      Sprite.prototype.set_scrollable = function(scrollable) {
+        this.__scrollable = scrollable;
+        this.__updateOverflow();
+        return this.__updatePointerEvents();
+      };
+
+      Sprite.prototype.__updateOverflow = function() {
+        return this.setStyle('overflow', this.__scrollable ? 'auto' : this.__clip ? 'hidden' : '');
+      };
+
+      Sprite.prototype.__updatePointerEvents = function() {
+        return this.setStyle('pointer-events', (this.__clickable || this.__scrollable ? 'auto' : 'none'), true);
+      };
+
       Sprite.prototype.destroy = function() {
         this.el.parentNode.removeChild(this.el);
         return this.el = this.jqel = null;
-      };
-
-      Sprite.prototype.set_clip = function(clip) {
-        return this.setStyle('overflow', clip ? 'hidden' : '');
       };
 
       Sprite.prototype.setText = function(txt) {
@@ -1287,9 +1333,8 @@
         return view.sendEvent(event.type, view);
       };
 
-      Sprite.prototype.createTextElement = function(text) {
-        this.el.setAttribute('class', 'sprite sprite-text noselect');
-        return this.setText(text);
+      Sprite.prototype.createTextElement = function() {
+        return this.el.setAttribute('class', 'sprite sprite-text noselect');
       };
 
       Sprite.prototype.createInputtextElement = function(text, multiline, width, height) {
@@ -1358,15 +1403,15 @@
      * The visual base class for everything in dreem. Views extend dr.node to add the ability to set and animate visual attributes, and interact with the mouse.
      *
      * Views are positioned inside their parent according to their x and y coordinates.
-     * 
+     *
      * Views can contain methods, handlers, setters, constraints, attributes and other view, node or class instances.
      *
      * Views can be easily converted to reusable classes/tags by changing their outermost &lt;view> tags to &lt;class> and adding a name attribute.
      *
      * Views support a number of builtin attributes. Setting attributes that aren't listed explicitly will pass through to the underlying Sprite implementation.
-     * 
+     *
      * Views currently integrate with jQuery, so any changes made to their CSS via jQuery will automatically cause them to update.
-     * 
+     *
      * Note that dreem apps must be contained inside a top-level &lt;view>&lt;/view> tag.
      *
      * The following example shows a pink view that contains a smaller blue view offset 10 pixels from the top and 10 from the left.
@@ -1457,6 +1502,12 @@
 
 
       /**
+       * @cfg {Boolean} [scrollable=false]
+       * If true, this view clips to its bounds and provides scrolling to see content that overflows the bounds
+       */
+
+
+      /**
        * @cfg {Boolean} [visible=true]
        * If false, this view is invisible
        */
@@ -1469,35 +1520,35 @@
 
 
       /**
-       * @event onclick 
+       * @event onclick
        * Fired when this view is clicked
        * @param {dr.view} view The dr.view that fired the event
        */
 
 
       /**
-       * @event onmouseover 
+       * @event onmouseover
        * Fired when the mouse moves over this view
        * @param {dr.view} view The dr.view that fired the event
        */
 
 
       /**
-       * @event onmouseout 
+       * @event onmouseout
        * Fired when the mouse moves off this view
        * @param {dr.view} view The dr.view that fired the event
        */
 
 
       /**
-       * @event onmousedown 
+       * @event onmousedown
        * Fired when the mouse goes down on this view
        * @param {dr.view} view The dr.view that fired the event
        */
 
 
       /**
-       * @event onmouseup 
+       * @event onmouseup
        * Fired when the mouse goes up on this view
        * @param {dr.view} view The dr.view that fired the event
        */
@@ -1515,7 +1566,7 @@
          */
 
         /**
-         * @event onsubviews 
+         * @event onsubviews
          * Fired when this views's subviews array has changed
          * @param {dr.view} view The dr.view that fired the event
          */
@@ -1527,7 +1578,7 @@
          */
 
         /**
-         * @event onlayouts 
+         * @event onlayouts
          * Fired when this views's layouts array has changed
          * @param {dr.layout} view The dr.layout that fired the event
          */
@@ -1544,6 +1595,7 @@
           height: 'number',
           clickable: 'boolean',
           clip: 'boolean',
+          scrollable: 'boolean',
           visible: 'boolean'
         };
         defaults = {
@@ -1553,6 +1605,7 @@
           height: 0,
           clickable: false,
           clip: false,
+          scrollable: false,
           visible: true
         };
         _ref = attributes.$types;
@@ -1628,6 +1681,10 @@
 
       View.prototype.set_clip = function(clip) {
         return this.sprite.set_clip(clip);
+      };
+
+      View.prototype.set_scrollable = function(scrollable) {
+        return this.sprite.set_scrollable(scrollable);
       };
 
       View.prototype.destroy = function(skipevents) {
@@ -1733,9 +1790,9 @@
 
       InputText.prototype._createSprite = function(el, attributes) {
         InputText.__super__._createSprite.apply(this, arguments);
-        this.text = attributes.text || this.sprite.getText(true);
+        attributes.text || (attributes.text = this.sprite.getText(true));
         this.sprite.setText('');
-        return this.sprite.createInputtextElement(this.text, attributes.multiline, attributes.width, attributes.height);
+        return this.sprite.createInputtextElement('', attributes.multiline, attributes.width, attributes.height);
       };
 
       InputText.prototype._handleChange = function() {
@@ -1887,7 +1944,8 @@
 
       Text.prototype._createSprite = function(el, attributes) {
         Text.__super__._createSprite.apply(this, arguments);
-        return this.sprite.createTextElement(this.format(attributes.text));
+        attributes.text || (attributes.text = this.sprite.getText(true));
+        return this.sprite.createTextElement();
       };
 
 
@@ -1992,7 +2050,7 @@
         });
       };
       findAutoIncludes = function(parentel, callback) {
-        var cb, cb2, fileloaded, filerequests, includedScripts, includerequests, inlineclasses, jqel, loadIncludes, loadLZX, loadScript, loadqueue, parser, scriptloading;
+        var cb, cb2, fileloaded, filerequests, includedScripts, includerequests, inlineclasses, jqel, loadIncludes, loadLZX, loadScript, loadqueue, scriptloading, validator;
         jqel = $(parentel);
         includerequests = [];
         includedScripts = {};
@@ -2151,7 +2209,7 @@
             });
           });
         };
-        parser = function() {
+        validator = function() {
           var prom, url;
           url = '/validate/';
           prom = $.ajax({
@@ -2168,7 +2226,7 @@
           return callback();
         };
         cb2 = function() {
-          return loadIncludes(parser);
+          return loadIncludes(validator);
         };
         cb = function() {
           return loadIncludes(cb2);
@@ -2765,7 +2823,7 @@
               for (_k = 0, _len2 = children.length; _k < _len2; _k++) {
                 child = children[_k];
                 if (!child.inited && child.localName === !'class') {
-                  setTimeout(checkChildren, 10);
+                  setTimeout(checkChildren, 0);
                   return;
                 }
               }

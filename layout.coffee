@@ -227,6 +227,10 @@ window.dr = do ->
           showWarnings ["Invalid type '#{type}' for attribute '#{name}', must be one of: #{Object.keys(typemappings).join(', ')}"]
           return
         value = typemappings[type](value)
+      else unless value?
+        #if this is a string type attribute it should be set to the empty string if it is null or undefined
+        # (as in the case where it is set by constraint, and the constraint resolves to undefined)
+        value = ''
       return value
 
     _setDefaults: (attributes, defaults={}) ->
@@ -256,8 +260,8 @@ window.dr = do ->
     sendEvent: (name, value) ->
       lockkey = "c#{name}"
       if eventlock[name] == @ and eventlock[lockkey]++ > 0
-        # don't send events more than once per setAttribute() for a given object/name 
-        return @ 
+        # don't send events more than once per setAttribute() for a given object/name
+        return @
 
       # send event
       if @events?[name] and eventlock[name] != @
@@ -296,7 +300,7 @@ window.dr = do ->
   compiler = do ->
     nocache = querystring.indexOf('nocache') > 0
     strict = querystring.indexOf('strict') > 0
-    
+
     # Fix for iOS throwing exceptions when accessing localStorage in private mode, see http://stackoverflow.com/questions/21159301/quotaexceedederror-dom-exception-22-an-attempt-was-made-to-add-something-to-st
     usecache = capabilities.localStorage unless nocache
 
@@ -307,9 +311,9 @@ window.dr = do ->
       # console.log 'restored', compileCache, cacheData.length
     else
       localStorage.clear()
-      compileCache = 
+      compileCache =
         bindings: {}
-        script: 
+        script:
           coffee: {}
       localStorage[cacheKey] = JSON.stringify(compileCache) if usecache
 
@@ -321,7 +325,7 @@ window.dr = do ->
     findBindings = do ->
       bindingCache = compileCache.bindings
       scopes = null
-      propertyBindings = 
+      propertyBindings =
         MemberExpression: (n) ->
           # grab the property name
           name = n.property.name
@@ -345,9 +349,9 @@ window.dr = do ->
       # propertyBindings.find = _.memoize(propertyBindings.find)
 
     # transforms a script to javascript using a runtime compiler
-    transform = do ->    
+    transform = do ->
       coffeeCache = compileCache.script.coffee
-      compilers = 
+      compilers =
         coffee: (script) ->
           if usecache and script of coffeeCache
             # console.log 'cache hit', script
@@ -355,7 +359,7 @@ window.dr = do ->
           if not window.CoffeeScript
             console.warn 'missing coffee-script.js include'
             return
-          try 
+          try
           # console.log 'compiling coffee-script', script
             coffeeCache[script] = CoffeeScript.compile(script, bare: true) if script
           catch error
@@ -366,7 +370,7 @@ window.dr = do ->
 
       (script='', name) ->
         return script unless name of compilers
-        compilers[name](script) 
+        compilers[name](script)
 
     # cache compiled scripts to speed up instantiation
     scriptCache = {}
@@ -376,7 +380,7 @@ window.dr = do ->
       key = script + argstring + name
       return scriptCache[key] if key of scriptCache
       # console.log 'compiling', args, script
-      try 
+      try
         # console.log scriptCache
         if debug and name
           script = "\"use strict\"\n" + script if strict
@@ -386,9 +390,9 @@ window.dr = do ->
         # console.log 'compiled', func
         scriptCache[key] = func
       catch e
-        console.error 'failed to compile', e.toString(), args, script 
+        console.error 'failed to compile', e.toString(), args, script
 
-    exports = 
+    exports =
       compile: compile
       transform: transform
       findBindings: findBindings
@@ -466,25 +470,27 @@ window.dr = do ->
   ###
   class Node extends Eventable
     ###*
-    # @cfg {String} name 
+    # @cfg {String} name
     # Names this node in its parent scope so it can be referred to later.
     ###
     ###*
-    # @cfg {String} id 
+    # @cfg {String} id
     # Gives this node a global ID, which can be looked up in the global window object.
     # Take care to not override builtin globals, or override your own instances!
     ###
     ###*
-    # @cfg {String} scriptincludes 
+    # @cfg {String} scriptincludes
     # A comma separated list of URLs to javascript includes required as dependencies. Useful if you need to ensure a third party library is available.
     ###
     ###*
-    # @cfg {String} scriptincludeserror 
+    # @cfg {String} scriptincludeserror
     # An error to show if scriptincludes fail to load
     ###
     matchConstraint = /\${(.+)}/
     # parent must be set before name
     earlyattributes = ['parent', 'name']
+    # data must be set after text
+    lateattributes = ['data']
 
     constructor: (el, attributes = {}) ->
 
@@ -530,11 +536,15 @@ window.dr = do ->
         @_bindHandlers()
 
       for name in earlyattributes
-        @setAttribute(name, attributes[name]) if attributes[name]
+        @setAttribute(name, attributes[name]) if name of attributes
 
       # Bind to event expressions and set attributes
       for name, value of attributes
-        @bindAttribute(name, value, attributes.$tagname) unless name in earlyattributes
+        continue if name in lateattributes or name in earlyattributes
+        @bindAttribute(name, value, attributes.$tagname)
+
+      for name in lateattributes
+        @bindAttribute(name, attributes[name], attributes.$tagname) if name of attributes
 
       constraintScopes.push(@) if @constraints
 
@@ -632,7 +642,7 @@ window.dr = do ->
           args = arguments
         else if name of scope
           args = [scope[name]]
-        else 
+        else
           args = []
         # console.log 'event callback', name, args, scope, js
         js.apply(scope, args)
@@ -652,11 +662,11 @@ window.dr = do ->
         scope[methodname] = method
       # console.log('installed method', methodname, scope, scope[methodname])
 
-    # applies a constraint, must call _initConstraints for constraints to be bound 
+    # applies a constraint, must call _initConstraints for constraints to be bound
     _applyConstraint: (property, expression) ->
       @constraints ?= {}
       # console.log 'adding constraint', property, expression, @
-      @constraints[property] = 
+      @constraints[property] =
         expression: expression
         bindings: {}
 
@@ -684,33 +694,55 @@ window.dr = do ->
         for bindexpression, bindinglist of bindings
           boundref = @_valueLookup(bindexpression)()
           if not boundref
-            showWarnings(["Could not bind constraint #{bindexpression}"]) 
+            showWarnings(["Could not bind constraint #{bindexpression}"])
             continue
           boundref ?= boundref.$view
           for binding in bindinglist
             property = binding.property
             # console.log 'binding to', property, 'on', boundref
             boundref.bind?(property, constraint)
-          
+
         @setAttribute(name, fn())
       return
 
     _bindHandlers: (isLate) ->
       bindings = if isLate then @latehandlers else @handlers
       return unless bindings
+
+      # Track bindings that need to be deferred here
+      defer = []
       for binding in bindings
         {scope, name, ev, callback, reference} = binding
         if reference
           refeval = @_valueLookup(reference)()
-          # console.log('binding to reference', reference, refeval, ev, scope)
-          scope.listenTo(refeval, ev, callback)
+          # Ensure we have a reference to a Dreem object
+          if refeval instanceof Eventable
+            scope.listenTo(refeval, ev, callback)
+            # console.log('binding to reference', reference, refeval, ev, scope)
+          else
+            # if not, defer this binding and continue
+            defer.push binding
+            continue
         else
           # console.log('binding to scope', scope, ev)
           scope.bind(ev, callback)
           scope.sendEvent(ev, scope[ev]) if scope[ev]
+
+      # if bindings need to be deferred, try again later
+      if defer.length
+        if isLate 
+          @latehandlers = defer
+        else 
+          @handlers = defer
+        # console.log 'found deferred bindings', defer
+        setTimeout(() =>
+          @_bindHandlers(isLate)
+        , 0)
+        return
+
       if isLate 
         @latehandlers = []
-      else 
+      else
         @handlers = []
       return
 
@@ -730,7 +762,7 @@ window.dr = do ->
         parent[@name] = @ if @name
         parent.subnodes.push(@)
         ###*
-        # @event onsubnodes 
+        # @event onsubnodes
         # Fired when this node's subnodes array has changed
         # @param {dr.node} node The dr.node that fired the event
         ###
@@ -783,7 +815,7 @@ window.dr = do ->
       # console.log 'destroy node', @
 
       ###*
-      # @event ondestroy 
+      # @event ondestroy
       # Fired when this node and all its children are about to be destroyed
       # @param {dr.node} node The dr.node that fired the event
       ###
@@ -812,7 +844,7 @@ window.dr = do ->
   class Sprite
 #    guid = 0
     noop = () ->
-    stylemap = 
+    stylemap =
       x: 'left'
       y: 'top'
       bgcolor: 'backgroundColor'
@@ -820,6 +852,7 @@ window.dr = do ->
     styleval =
       display: (isVisible) ->
         if isVisible then '' else 'none'
+        
     fcamelCase = ( all, letter ) ->
       letter.toUpperCase()
     rdashAlpha = /-([\da-z])/gi
@@ -847,7 +880,7 @@ window.dr = do ->
     setStyle: (name, value, internal, el=@el) ->
       value ?= ''
       if name of stylemap
-        name = stylemap[name] 
+        name = stylemap[name]
       if name of styleval
         value = styleval[name](value)
       else if name.match(rdashAlpha)
@@ -885,9 +918,9 @@ window.dr = do ->
 
     sendMouseEvent: (type, first) ->
       simulatedEvent = document.createEvent('MouseEvent')
-      simulatedEvent.initMouseEvent(type, true, true, window, 1, 
-                                first.pageX, first.pageY, 
-                                first.clientX, first.clientY, false, 
+      simulatedEvent.initMouseEvent(type, true, true, window, 1,
+                                first.pageX, first.pageY,
+                                first.clientX, first.clientY, false,
                                 false, false, false, 0, null)
       first.target.dispatchEvent(simulatedEvent)
       if first.target.$view and first.target.$view.$tagname isnt 'inputtext'
@@ -912,7 +945,8 @@ window.dr = do ->
             lastTouchDown = null
 
     set_clickable: (clickable) ->
-      @setStyle('pointer-events', (if clickable then 'auto' else 'none'), true)
+      @__clickable = clickable
+      @__updatePointerEvents()
       @setStyle('cursor', (if clickable then 'pointer' else ''), true)
 
       if capabilities.touch
@@ -927,13 +961,38 @@ window.dr = do ->
       # $(document.elementFromPoint(event.clientX,event.clientY)).trigger(type)
       # el.show()
 
+    set_clip: (clip) ->
+      # console.log('setid', @id)
+      @__clip = clip
+      @__updateOverflow()
+
+    set_scrollable: (scrollable) ->
+      # console.log('setid', @id)
+      @__scrollable = scrollable
+      @__updateOverflow()
+      @__updatePointerEvents()
+
+    __updateOverflow: () ->
+      @setStyle('overflow',
+        if @__scrollable
+          'auto'
+        else if @__clip
+          'hidden'
+        else
+          ''
+      )
+
+    __updatePointerEvents: () ->
+      @setStyle('pointer-events', (
+        if @__clickable || @__scrollable
+          'auto'
+        else
+          'none'
+      ), true)
+
     destroy: ->
       @el.parentNode.removeChild(@el)
       @el = @jqel = null
-
-    set_clip: (clip) ->
-      # console.log('setid', @id)
-      @setStyle('overflow', if clip then 'hidden' else '')
 
     setText: (txt) ->
       if txt?
@@ -969,9 +1028,8 @@ window.dr = do ->
       # console.log 'event', event.type, view
       view.sendEvent(event.type, view)
 
-    createTextElement: (text) ->
+    createTextElement: () ->
       @el.setAttribute('class', 'sprite sprite-text noselect')
-      @setText(text)
 
     createInputtextElement: (text, multiline, width, height) ->
       @el.setAttribute('class', 'sprite noselect')
@@ -997,7 +1055,7 @@ window.dr = do ->
       h = parseInt($(@input).css('height'))
       borderH = parseInt($(@el).css('border-top-width')) + parseInt($(@el).css('border-bottom-width'))
       paddingH = parseInt($(@el).css('padding-top')) + parseInt($(@el).css('padding-bottom'))
-      return h + borderH + paddingH 
+      return h + borderH + paddingH
 
     getAbsolute: () ->
       @jqel ?= $(@el)
@@ -1018,15 +1076,15 @@ window.dr = do ->
   # The visual base class for everything in dreem. Views extend dr.node to add the ability to set and animate visual attributes, and interact with the mouse.
   #
   # Views are positioned inside their parent according to their x and y coordinates.
-  # 
+  #
   # Views can contain methods, handlers, setters, constraints, attributes and other view, node or class instances.
   #
   # Views can be easily converted to reusable classes/tags by changing their outermost &lt;view> tags to &lt;class> and adding a name attribute.
   #
   # Views support a number of builtin attributes. Setting attributes that aren't listed explicitly will pass through to the underlying Sprite implementation.
-  # 
+  #
   # Views currently integrate with jQuery, so any changes made to their CSS via jQuery will automatically cause them to update.
-  # 
+  #
   # Note that dreem apps must be contained inside a top-level &lt;view>&lt;/view> tag.
   #
   # The following example shows a pink view that contains a smaller blue view offset 10 pixels from the top and 10 from the left.
@@ -1102,6 +1160,10 @@ window.dr = do ->
     # If true, this view clips to its bounds
     ###
     ###*
+    # @cfg {Boolean} [scrollable=false]
+    # If true, this view clips to its bounds and provides scrolling to see content that overflows the bounds
+    ###
+    ###*
     # @cfg {Boolean} [visible=true]
     # If false, this view is invisible
     ###
@@ -1111,27 +1173,27 @@ window.dr = do ->
     ###
 
     ###*
-    # @event onclick 
+    # @event onclick
     # Fired when this view is clicked
     # @param {dr.view} view The dr.view that fired the event
     ###
     ###*
-    # @event onmouseover 
+    # @event onmouseover
     # Fired when the mouse moves over this view
     # @param {dr.view} view The dr.view that fired the event
     ###
     ###*
-    # @event onmouseout 
+    # @event onmouseout
     # Fired when the mouse moves off this view
     # @param {dr.view} view The dr.view that fired the event
     ###
     ###*
-    # @event onmousedown 
+    # @event onmousedown
     # Fired when the mouse goes down on this view
     # @param {dr.view} view The dr.view that fired the event
     ###
     ###*
-    # @event onmouseup 
+    # @event onmouseup
     # Fired when the mouse goes up on this view
     # @param {dr.view} view The dr.view that fired the event
     ###
@@ -1142,7 +1204,7 @@ window.dr = do ->
       # An array of this views's child views
       ###
       ###*
-      # @event onsubviews 
+      # @event onsubviews
       # Fired when this views's subviews array has changed
       # @param {dr.view} view The dr.view that fired the event
       ###
@@ -1152,7 +1214,7 @@ window.dr = do ->
       # An array of this views's layouts. Only defined when needed.
       ###
       ###*
-      # @event onlayouts 
+      # @event onlayouts
       # Fired when this views's layouts array has changed
       # @param {dr.layout} view The dr.layout that fired the event
       ###
@@ -1161,8 +1223,8 @@ window.dr = do ->
       # If true, layouts should ignore this view
       ###
       @subviews = []
-      types = {x: 'number', y: 'number', width: 'number', height: 'number', clickable: 'boolean', clip: 'boolean', visible: 'boolean'}
-      defaults = {x:0, y:0, width:0, height:0, clickable:false, clip:false, visible:true}
+      types = {x: 'number', y: 'number', width: 'number', height: 'number', clickable: 'boolean', clip: 'boolean', scrollable: 'boolean', visible: 'boolean'}
+      defaults = {x:0, y:0, width:0, height:0, clickable:false, clip:false, scrollable:false, visible:true}
 
       for key, type of attributes.$types
         types[key] = type
@@ -1229,6 +1291,9 @@ window.dr = do ->
 
     set_clip: (clip) ->
       @sprite.set_clip(clip)
+
+    set_scrollable: (scrollable) ->
+      @sprite.set_scrollable(scrollable)
 
     destroy: (skipevents) ->
       # console.log 'destroy view', @
@@ -1309,9 +1374,9 @@ window.dr = do ->
 
     _createSprite: (el, attributes) ->
       super
-      @text = attributes.text || @sprite.getText(true)
+      attributes.text ||= @sprite.getText(true)
       @sprite.setText('')
-      @sprite.createInputtextElement(@text, attributes.multiline, attributes.width, attributes.height)
+      @sprite.createInputtextElement('', attributes.multiline, attributes.width, attributes.height)
 
     _handleChange: () ->
       return unless @replicator
@@ -1432,7 +1497,8 @@ window.dr = do ->
 
     _createSprite: (el, attributes) ->
       super
-      @sprite.createTextElement(@format(attributes.text))
+      attributes.text ||= @sprite.getText(true) #so the text attribute has value when the text is set between the tags
+      @sprite.createTextElement()
 
     ###*
     # @method format
@@ -1656,7 +1722,7 @@ window.dr = do ->
           )
         )
 
-      parser = ->
+      validator = ->
         url = '/validate/'
         # data = '<html>' + document.getElementsByTagName('html')[0].innerHTML + '</html>'
         # console.log(url, data)
@@ -1668,12 +1734,13 @@ window.dr = do ->
           success: (data) ->
             showWarnings(data) if (data.length)
         })
+
         callback()
 
       # must do this thrice to catch autoinclude autoincludes, see https://github.com/teem2/dreem/issues/6 and https://www.pivotaltracker.com/story/show/77941122
       cb2 = () ->
         # console.log 'loading dre', name, url, el
-        loadIncludes(parser)
+        loadIncludes(validator)
       cb = () ->
         loadIncludes(cb2)
       loadIncludes(cb)
@@ -1754,6 +1821,7 @@ window.dr = do ->
       return unless children.length > 0
 
       unless isClass or isState
+#        grab children again in case any were added when the parent was instantiated
         children = (child for child in el.childNodes when child.nodeType == 1)
         # create children now
         for child in children
@@ -2175,7 +2243,7 @@ window.dr = do ->
             for child in children
               if not child.inited and child.localName is not 'class'
                 # console.log 'child not initted', child, parent
-                setTimeout(checkChildren, 10)
+                setTimeout(checkChildren, 0)
                 return
             # console.log('class doinit', parent)
             sendInit()

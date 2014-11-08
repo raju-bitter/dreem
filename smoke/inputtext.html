@@ -38,7 +38,7 @@
     </handler>
   </inputtext>
 
-  <inputtext text="some text">
+  <inputtext text="some text" bgcolor="thistle">
     <handler event="oninit">
       assert.equal(this.text, "some text");
     </handler>
@@ -46,11 +46,23 @@
 
   <!-- Setting text with a constraint -->
   <view>
+    <boundslayout></boundslayout>
     <attribute name="text" type="string" value="some text"></attribute>
 
-    <inputtext text="${this.parent.text}">
+    <inputtext bgcolor="lightgreen" text="${this.parent.text}">
       <handler event="oninit">
+        assert.equal($(this.sprite.input)[0].value, 'some text')
         assert.equal(this.text, "some text");
+      </handler>
+    </inputtext>
+  </view>
+
+  <view>
+    <boundslayout></boundslayout>
+    <inputtext bgcolor="lightyellow" text="${this.parent.text}">
+      <handler event="oninit">
+        assert.equal($(this.sprite.input)[0].value, '')
+        assert.equal(this.text, '');
       </handler>
     </inputtext>
   </view>
@@ -72,7 +84,7 @@
     </handler>
   </inputtext>
 
-  <!-- Setting text between tags, copied from error79559390.html -->
+  <!-- Setting text between tags -->
   <inputtext>
     some other text
     <handler event="oninit">
@@ -80,7 +92,7 @@
     </handler>
   </inputtext>
 
-  <!-- Default sizing, copied and modified slightly from error81883292.html -->
+  <!-- Default sizing -->
   <inputtext bgcolor="green">
     Text
     <handler event="oninit">
@@ -88,6 +100,7 @@
       assert.equal(this.height, window._phantom ? 14 : 16)
     </handler>
   </inputtext>
+  
 </view>
 <!-- The MIT License (MIT)
 
