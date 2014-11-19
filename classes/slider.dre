@@ -82,11 +82,13 @@ SOFTWARE. -->
         * @param {Number} v The new value of the component.
         */-->
       <method name="changeValue" args="v">
+        if (v == this.value)
+          return;
         if (v > @maxvalue)
           v = @maxvalue;
         else if (v < @minvalue)
           v = @minvalue;
-        @setAttribute('value', v);
+        @setAttribute('value', v)
       </method>
 
       <!--/**

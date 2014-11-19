@@ -87,6 +87,22 @@ SOFTWARE. -->
         */-->
 
       <!--/**
+        * @attribute {Number} [animationframe=0]
+        * @readonly
+        * The current animation frame (0,1)
+        */-->
+
+      <!--/**
+        * @attribute {Number} [animationframestart=0]
+        * The initial starting frame (0,1) of the animation
+        */-->
+
+      <!--/**
+        * @attribute {Number} [animationframeend=1]
+        * The final ending frame (0,1) of the animation
+        */-->
+
+      <!--/**
         * @attribute {"linear"/"easeout"/"easein"/"easeinout"/"backin"/"backout"/"elastic"/"bounce"} [animationcurve="linear"]
         * The name of the curve to use when animating between paths
         */-->
@@ -106,6 +122,9 @@ SOFTWARE. -->
       <attribute name="src" value="" type="string"></attribute>
       <attribute name="animationspeed" value="400" type="number"></attribute>
       <attribute name="animationcurve" value="linear" type="string"></attribute>
+      <attribute name="animationframe" value="0.0" type="number"></attribute>
+      <attribute name="animationframestart" value="0.0" type="number"></attribute>
+      <attribute name="animationframestop" value="1.0" type="number"></attribute>
 
       <attribute name="stretches" value="false" type="boolean"></attribute>
       <handler event="onstretches" method="resizeArt"></handler>
@@ -136,7 +155,7 @@ SOFTWARE. -->
         # If debug=true, show attributes that pass through to the svg
         debug = window.location.search.indexOf('debug') > 0
         if debug
-          @expectedAttr = ['x','y','width','height','parent','clip','id','scrollable','clickable','visible','$textcontent','$tagname','inline','src','path','stretches','animationspeed','animationcurve'] unless @expectedAttr
+          @expectedAttr = ['x','y','width','height','parent','clip','id','scrollable','clickable','visible','$textcontent','$tagname','borderstyle','padding','border-width','border-color','border-style','inline','src','path','stretches','animationspeed','animationcurve','animationframe','animationframestart','animationframestop'] unless @expectedAttr
           unless name in @expectedAttr
             console.warn('Passing attribute', name, 'to svg')
       </method>
@@ -152,6 +171,21 @@ SOFTWARE. -->
       </method>
 
 
+      <method name="get_path_frame" args="name, params">
+        # Construct a start or stop animation state using the specified
+        # path, and optional other animation parameters
+
+        curve = mina[@animationcurve] or mina.linear
+        params = {} if !params
+        return params if !@snap
+
+        path = @get_path(name)
+        if path
+          d1 = path[0].getAttribute('d')
+          params['d'] = d1
+        return params
+      </method>
+
       <method name="animate_path" args="name, params">
         # Animate the path, as well as specified params
         return @show_path(name) if !@snap
@@ -164,10 +198,35 @@ SOFTWARE. -->
         if path
           d1 = path[0].getAttribute('d')
           params['d'] = d1
-          @snappath.animate params, @animationspeed, curve, =>
+          @snappath.animate params, @animationspeed, curve, ( =>
             @sendEvent('tween')
+          ), ( (progress) =>
+            @setAttribute('animationframe', progress)
+          ),@animationframestart, @animationframestop
       </method>
 
+      <method name="show_frame" args="start_path, end_path, frame, start_params, end_params">
+        frame = 0 if frame < 0
+        frame = 1 if frame > 1
+
+        # Show a specific frame between a start_path and end_path. Other
+        # parameters can also be animated using start_params, end_params.
+        @show_path(start_path) if !@snap
+        return unless @snap
+
+        start_params = {} if !start_params
+        end_params = {} if !end_params
+
+        startframe = @get_path_frame(start_path, start_params)
+        endframe = @get_path_frame(end_path, end_params)
+
+        # Show a specific frame (0.0,1.0) from the animation
+        curve = mina[@animationcurve] or mina.linear
+
+        # Move to a specific frame in the animation
+        @snappath.frame_to startframe, endframe, curve, frame
+        @setAttribute('animationframe', frame.toFixed(2))
+      </method>
 
 
       <method name="createDOM">
