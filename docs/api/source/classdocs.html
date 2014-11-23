@@ -16,7 +16,7 @@
 </head>
 <body onload="prettyPrint(); highlight();">
   <pre class="prettyprint lang-js"><span id='dr-ace'>/**
-</span>     * @class dr.ace
+</span>     * @class dr.ace {UI Components}
      * @extends dr.view
      * Ace editor component.
      *
@@ -57,7 +57,7 @@
         * @param {dr.ace} view The dr.ace that fired the event
         */
 <span id='dr-alignlayout'>/**
-</span>      * @class dr.alignlayout
+</span>      * @class dr.alignlayout {Layout}
       * @extends dr.variablelayout
       * A variablelayout that aligns each view vertically or horizontally
       * relative to all the other views.
@@ -80,7 +80,7 @@
     * Determine the maximum subview width/height according to the alignment.
     */
 <span id='dr-art'>/**
-</span>     * @class dr.art
+</span>     * @class dr.art {UI Components}
      * @extends dr.view
      * Vector graphics support using svg.
      *
@@ -152,7 +152,7 @@
         * Fired when the art has animated its path to the next position
         */
 <span id='dr-audioplayer'>/**
-</span>     * @class dr.audioplayer
+</span>     * @class dr.audioplayer {UI Components}
      * @extends dr.node
      * audioplayer wraps the web audio APIs to provide a declarative interface to play audio.
      *
@@ -211,7 +211,7 @@
         * An array of numbers representing the FFT analysis of the audio as it&#39;s playing.
         */
 <span id='dr-bitmap'>/**
-</span>     * @class dr.bitmap
+</span>     * @class dr.bitmap {UI Components}
      * @extends dr.view
      * Loads an image from a URL.
      *
@@ -231,41 +231,8 @@
 </span>             * @event onerror 
              * Fired when there is an error loading the bitmap
              */
-<span id='dr-boundslayout'>/**
-</span>     * @class dr.boundslayout
-     * @extends dr.layout
-     * Sets the parent view&#39;s size to match the bounds of its children.
-     *
-     * Here is a view that contains three sub views that are positioned with a simplelayout. The parent view has a grey background color. Notice that the subviews are visible because they overflow the parent view, but the parent view itself takes up no space.
-     *
-     *     @example
-     *     &lt;view bgcolor=&quot;darkgrey&quot;&gt;
-     *       &lt;simplelayout axis=&quot;y&quot;&gt;&lt;/simplelayout&gt;
-     *
-     *       &lt;view width=&quot;100&quot; height=&quot;25&quot; bgcolor=&quot;lightpink&quot; opacity=&quot;.3&quot;&gt;&lt;/view&gt;
-     *       &lt;view width=&quot;100&quot; height=&quot;25&quot; bgcolor=&quot;plum&quot; opacity=&quot;.3&quot;&gt;&lt;/view&gt;
-     *       &lt;view width=&quot;100&quot; height=&quot;25&quot; bgcolor=&quot;lightblue&quot; opacity=&quot;.3&quot;&gt;&lt;/view&gt;
-     *     &lt;/view&gt;
-     *
-     * Now we&#39;ll add a boundlayout to the parent view. Notice that now the parent view does take up space, and you can see it through the semi-transparent subviews.
-     *
-     *     @example
-     *     &lt;view bgcolor=&quot;darkgrey&quot;&gt;
-     *       &lt;boundslayout&gt;&lt;/boundslayout&gt;
-     *
-     *       &lt;simplelayout axis=&quot;y&quot;&gt;&lt;/simplelayout&gt;
-     *
-     *       &lt;view width=&quot;100&quot; height=&quot;25&quot; bgcolor=&quot;lightpink&quot; opacity=&quot;.3&quot;&gt;&lt;/view&gt;
-     *       &lt;view width=&quot;100&quot; height=&quot;25&quot; bgcolor=&quot;plum&quot; opacity=&quot;.3&quot;&gt;&lt;/view&gt;
-     *       &lt;view width=&quot;100&quot; height=&quot;25&quot; bgcolor=&quot;lightblue&quot; opacity=&quot;.3&quot;&gt;&lt;/view&gt;
-     *     &lt;/view&gt;
-     */
-<span id='dr-boundslayout-attribute-ignoreattr'>/**
-</span>        * @attribute {&quot;&quot;/&quot;width&quot;/&quot;height&quot;} [ignoreattr=&quot;&quot;]
-        * Optionally skip bounds calculations for a specific axis.
-        */
 <span id='dr-buttonbase'>/**
-</span>     * @class dr.buttonbase
+</span>     * @class dr.buttonbase {UI Components}
      * @extends dr.view
      * Base class for button components. Buttons share common elements, 
      * including their ability to be selected, a visual element to display
@@ -301,7 +268,7 @@
         * Button text.
         */
 <span id='dr-checkbutton'>/**
-</span>     * @class dr.checkbutton
+</span>     * @class dr.checkbutton {UI Components}
      * @extends dr.buttonbase
      * Button class consisting of text and a visual element to show the
      * current state of the component. The state of the
@@ -310,7 +277,7 @@
      * is generated when the button is the selected state.
      *
      *     @example
-     *     &lt;simplelayout axis=&quot;y&quot;&gt;&lt;/simplelayout&gt;
+     *     &lt;spacedlayout axis=&quot;y&quot;&gt;&lt;/spacedlayout&gt;
      *
      *     &lt;checkbutton text=&quot;pink&quot; selectcolor=&quot;pink&quot; defaultcolor=&quot;lightgrey&quot; bgcolor=&quot;white&quot;&gt;&lt;/checkbutton&gt;
      *     &lt;checkbutton text=&quot;blue&quot; selectcolor=&quot;lightblue&quot; defaultcolor=&quot;lightgrey&quot; bgcolor=&quot;white&quot;&gt;&lt;/checkbutton&gt;
@@ -319,7 +286,7 @@
      * Here we listen for the onselected event on a checkbox and print the value that is passed to the handler.
      *
      *     @example
-     *     &lt;simplelayout axis=&quot;y&quot;&gt;&lt;/simplelayout&gt;
+     *     &lt;spacedlayout axis=&quot;y&quot;&gt;&lt;/spacedlayout&gt;
      *
      *     &lt;checkbutton text=&quot;green&quot; selectcolor=&quot;lightgreen&quot; defaultcolor=&quot;lightgrey&quot; bgcolor=&quot;white&quot;&gt;
      *       &lt;handler event=&quot;onselected&quot; args=&quot;value&quot;&gt;
@@ -328,15 +295,15 @@
      *     &lt;/checkbutton&gt;
      *
      *     &lt;view&gt;
-     *       &lt;simplelayout axis=&quot;x&quot;&gt;&lt;/simplelayout&gt;
+     *       &lt;spacedlayout&gt;&lt;/spacedlayout&gt;
      *       &lt;text text=&quot;Selected:&quot;&gt;&lt;/text&gt;
      *       &lt;text id=&quot;displayselected&quot;&gt;&lt;/text&gt;
      *     &lt;/view&gt;
      *
      */
 <span id='dr-constantlayout'>/**
-</span>      * @class dr.constantlayout
-      * @extends dr.layoot
+</span>      * @class dr.constantlayout {Layout}
+      * @extends dr.layout
       * A layout that sets the target attribute name to the target value for 
       * each subview.
       *
@@ -356,7 +323,7 @@
     * The value to set the attribute to.
     */
 <span id='dr-dataset'>/**
-</span>     * @class dr.dataset
+</span>     * @class dr.dataset {Data}
      * @extends dr.node
      * Datasets hold onto a set of JSON data, either inline or loaded from a URL.
      * They are used with lz.replicator for data binding.
@@ -402,14 +369,14 @@
      *        }
      *      }
      *     &lt;/dataset&gt;
-     *     &lt;simplelayout&gt;&lt;/simplelayout&gt;
+     *     &lt;spacedlayout&gt;&lt;/spacedlayout&gt;
      *     &lt;replicator classname=&quot;text&quot; datapath=&quot;$example/store/book[*]/title&quot;&gt;&lt;/replicator&gt;
      *
      * Data can be loaded from a URL when your backend server is ready, or reloaded to show changes over time:
      *
      *     @example wide
      *     &lt;dataset name=&quot;example&quot; url=&quot;/example.json&quot;&gt;&lt;/dataset&gt;
-     *     &lt;simplelayout&gt;&lt;/simplelayout&gt;
+     *     &lt;spacedlayout&gt;&lt;/spacedlayout&gt;
      *     &lt;replicator classname=&quot;text&quot; datapath=&quot;$example/store/book[*]/title&quot;&gt;&lt;/replicator&gt;
      */
 <span id='dr-dataset-attribute-name'>/**
@@ -425,7 +392,7 @@
         * The url to load JSON data from.
         */
 <span id='dr-dragstate'>/**
-</span>     * @class dr.dragstate
+</span>     * @class dr.dragstate {UI Components}
      * @extends dr.state
      * Allows views to be dragged by the mouse.
      *
@@ -466,7 +433,7 @@
         * The axes to drag on.
         */
 <span id='dr-gyro'>/**
-</span>     * @class dr.gyro
+</span>     * @class dr.gyro {Input}
      * @extends dr.node
      * Receives gyroscope and compass data where available. See [https://w3c.github.io/deviceorientation/spec-source-orientation.html#deviceorientation](https://w3c.github.io/deviceorientation/spec-source-orientation.html#deviceorientation) and [https://developer.apple.com/library/safari/documentation/SafariDOMAdditions/Reference/DeviceOrientationEventClassRef/DeviceOrientationEvent/DeviceOrientationEvent.html](https://developer.apple.com/library/safari/documentation/SafariDOMAdditions/Reference/DeviceOrientationEventClassRef/DeviceOrientationEvent/DeviceOrientationEvent.html) for details.
      */
@@ -503,14 +470,14 @@
         * The compass accuracy, see [https://developer.apple.com/library/safari/documentation/SafariDOMAdditions/Reference/DeviceOrientationEventClassRef/DeviceOrientationEvent/DeviceOrientationEvent.html](https://developer.apple.com/library/safari/documentation/SafariDOMAdditions/Reference/DeviceOrientationEventClassRef/DeviceOrientationEvent/DeviceOrientationEvent.html) for details.
         */
 <span id='dr-labelbutton'>/**
-</span>     * @class dr.labelbutton
+</span>     * @class dr.labelbutton {UI Components}
      * @extends dr.buttonbase
      * Button class consisting of text centered in a view. The onclick event
      * is generated when the button is clicked. The visual state of the 
      * button changes during onmousedown/onmouseup.
      *
      *     @example
-     *     &lt;simplelayout axis=&quot;y&quot;&gt;&lt;/simplelayout&gt;
+     *     &lt;spacedlayout axis=&quot;y&quot;&gt;&lt;/spacedlayout&gt;
      *
      *     &lt;labelbutton text=&quot;click me&quot; defaultcolor=&quot;plum&quot; selectcolor=&quot;orchid&quot;&gt;
      *       &lt;handler event=&quot;onclick&quot;&gt;
@@ -521,15 +488,22 @@
      *     &lt;text id=&quot;hello&quot;&gt;&lt;/text&gt;
      */
 <span id='dr-labeltoggle'>/**
-</span>     * @class dr.labeltoggle
+</span>     * @class dr.labeltoggle {UI Components}
      * @extends dr.labelbutton
      * Button class consisting of text centered in a view. The state of the
      * button changes each time the button is clicked. The select property
      * holds the current state of the button. The onselected event
      * is generated when the button is the selected state.
+     *
+     *     @example
+     *     &lt;spacedlayout axis=&quot;y&quot;&gt;&lt;/spacedlayout&gt;
+     *
+     *     &lt;labeltoggle id=&quot;toggle&quot; text=&quot;Click me to toggle&quot; defaultcolor=&quot;plum&quot; selectcolor=&quot;orchid&quot;&gt;&lt;/labeltoggle&gt;
+     *
+     *     &lt;text text=&quot;${toggle.selected ? &#39;selected&#39; : &#39;not selected&#39;}&quot;&gt;&lt;/text&gt;
      */
 <span id='dr-logger'>/**
-</span>     * @class dr.logger
+</span>     * @class dr.logger {Util}
      * @extends dr.node
      * Logs all attribute setting behavior
      *
@@ -540,7 +514,7 @@
      *     &lt;replicator datapath=&quot;$topmovies/searchResponse/results[*]/movie[take(/releaseYear,/duration,/rating)]&quot; classname=&quot;logger&quot;&gt;&lt;/replicator&gt;
      */
 <span id='dr-rangeslider'>/**
-</span>   * @class dr.rangeslider
+</span>   * @class dr.rangeslider {UI Components}
    * @extends dr.view
    * An input component whose upper and lower bounds are changed via mouse clicks or drags.
    *
@@ -640,27 +614,27 @@
       * The selected color of the upper bound slider.
       */
 <span id='dr-replicator'>/**
-</span>     * @class dr.replicator
+</span>     * @class dr.replicator {Data}
      * @extends dr.node
      * Handles replication and data binding.
      *
      * This example shows the replicator to creating four text instances, each corresponding to an item in the data attribute:
      *
      *     @example
-     *     &lt;simplelayout&gt;&lt;/simplelayout&gt;
+     *     &lt;spacedlayout&gt;&lt;/spacedlayout&gt;
      *     &lt;replicator classname=&quot;text&quot; data=&quot;[1,2,3,4]&quot;&gt;&lt;/replicator&gt;
      *
      * Changing the data attribute to a new array causes the replicator to create a new text for each item:
      *
      *     @example
-     *     &lt;simplelayout&gt;&lt;/simplelayout&gt;
+     *     &lt;spacedlayout&gt;&lt;/spacedlayout&gt;
      *     &lt;text onclick=&quot;repl.setAttribute(&#39;data&#39;, [5,6,7,8]);&quot;&gt;Click to change data&lt;/text&gt;
      *     &lt;replicator id=&quot;repl&quot; classname=&quot;text&quot; data=&quot;[1,2,3,4]&quot;&gt;&lt;/replicator&gt;
      *
      * This example uses a {@link #filterexpression filterexpression} to filter the data to only numbers. Clicking changes {@link #filterexpression filterexpression} to show only non-numbers in the data:
      *
      *     @example
-     *     &lt;simplelayout&gt;&lt;/simplelayout&gt;
+     *     &lt;spacedlayout&gt;&lt;/spacedlayout&gt;
      *     &lt;text onclick=&quot;repl.setAttribute(&#39;filterexpression&#39;, &#39;[^\\d]&#39;);&quot;&gt;Click to change filter&lt;/text&gt;
      *     &lt;replicator id=&quot;repl&quot; classname=&quot;text&quot; data=&quot;[&#39;a&#39;,1,&#39;b&#39;,2,&#39;c&#39;,3,4,5]&quot; filterexpression=&quot;\d&quot;&gt;&lt;/replicator&gt;
      *
@@ -698,7 +672,7 @@
      *        ]
      *      }
      *     &lt;/dataset&gt;
-     *     &lt;simplelayout&gt;&lt;/simplelayout&gt;
+     *     &lt;spacedlayout&gt;&lt;/spacedlayout&gt;
      *     &lt;replicator classname=&quot;text&quot; datapath=&quot;$bikeshop/bicycle[*]/color&quot;&gt;&lt;/replicator&gt;
      *
      * It&#39;s possible to select a single item on from the array using an array index. This selects the second item:
@@ -722,7 +696,7 @@
      *        ]
      *      }
      *     &lt;/dataset&gt;
-     *     &lt;simplelayout&gt;&lt;/simplelayout&gt;
+     *     &lt;spacedlayout&gt;&lt;/spacedlayout&gt;
      *     &lt;replicator classname=&quot;text&quot; datapath=&quot;$bikeshop/bicycle[1]/color&quot;&gt;&lt;/replicator&gt;
      *
      * It&#39;s also possible to replicate a range of items in the array with the [start,end,stepsize] operator. This replicates every other item:
@@ -746,7 +720,7 @@
      *        ]
      *      }
      *     &lt;/dataset&gt;
-     *     &lt;simplelayout&gt;&lt;/simplelayout&gt;
+     *     &lt;spacedlayout&gt;&lt;/spacedlayout&gt;
      *     &lt;replicator classname=&quot;text&quot; datapath=&quot;$bikeshop/bicycle[0,3,2]/color&quot;&gt;&lt;/replicator&gt;
      *
      * Sometimes it&#39;s necessary to have complete control and flexibility over filtering and transforming results. Adding a [@] operator to the end of your datapath causes {@link #filterfunction filterfunction} to be called for each result. This example shows bike colors for bikes with a price greater than 20, in reverse order:
@@ -770,7 +744,7 @@
      *        ]
      *      }
      *     &lt;/dataset&gt;
-     *     &lt;simplelayout&gt;&lt;/simplelayout&gt;
+     *     &lt;spacedlayout&gt;&lt;/spacedlayout&gt;
      *     &lt;replicator classname=&quot;text&quot; datapath=&quot;$bikeshop/bicycle[*][@]&quot;&gt;
      *       &lt;method name=&quot;filterfunction&quot; args=&quot;obj, accum&quot;&gt;
      *         // add the color to the beginning of the results if the price is greater than 20
@@ -824,7 +798,7 @@
         * @returns {Object[]} The accum array. Must be returned otherwise results will be lost.
         */
 <span id='dr-resizelayout'>/**
-</span>      * @class dr.resizelayout
+</span>      * @class dr.resizelayout {Layout}
       * @extends dr.spacedlayout
       * Resizes one or more views to fill in any remaining space.
       *
@@ -837,7 +811,7 @@
       *     &lt;view height=&quot;15&quot; bgcolor=&quot;lightblue&quot;&gt;&lt;/view&gt;
       */
 <span id='dr-shim'>/**
-</span>     * @class dr.shim
+</span>     * @class dr.shim {Util}
      * @extends dr.node
      * Connects to the shared event bus. When data is sent with a given type, a corresponding event is sent. For example, send(&#39;blah&#39;, {}) sends data with the &#39;blah&#39; type, other shims will receive the object via an &#39;onblah&#39; event.
      */
@@ -860,17 +834,35 @@
         * @param {Object} data The data to be sent.
         */
 <span id='dr-shrinktofit'>/**
-</span>      * @class dr.shrinktofit
-      * @extends dr.layoot
+</span>      * @class dr.shrinktofit {Layout}
+      * @extends dr.layout
       * A special &quot;layout&quot; that resizes the parent to fit the children 
       * rather than laying out the children.
       *
-      *     @example
-      *     &lt;shrinktofit axis=&quot;both&quot; xpad=&quot;5&quot; ypad=&quot;10&quot;&gt;&lt;/shrinktofit&gt;
       *
-      *     &lt;view width=&quot;100&quot; height=&quot;25&quot; bgcolor=&quot;lightpink&quot;&gt;&lt;/view&gt;
-      *     &lt;view width=&quot;100&quot; height=&quot;25&quot; bgcolor=&quot;plum&quot;&gt;&lt;/view&gt;
-      *     &lt;view width=&quot;100&quot; height=&quot;25&quot; bgcolor=&quot;lightblue&quot;&gt;&lt;/view&gt;
+      * Here is a view that contains three sub views that are positioned with a spacedlayout. The parent view has a grey background color. Notice that the subviews are visible because they overflow the parent view, but the parent view itself takes up no space.
+      *
+      *     @example
+      *     &lt;view bgcolor=&quot;darkgrey&quot;&gt;
+      *       &lt;spacedlayout axis=&quot;y&quot;&gt;&lt;/spacedlayout&gt;
+      *
+      *       &lt;view width=&quot;100&quot; height=&quot;25&quot; bgcolor=&quot;lightpink&quot; opacity=&quot;.3&quot;&gt;&lt;/view&gt;
+      *       &lt;view width=&quot;100&quot; height=&quot;25&quot; bgcolor=&quot;plum&quot; opacity=&quot;.3&quot;&gt;&lt;/view&gt;
+      *       &lt;view width=&quot;100&quot; height=&quot;25&quot; bgcolor=&quot;lightblue&quot; opacity=&quot;.3&quot;&gt;&lt;/view&gt;
+      *     &lt;/view&gt;
+      *
+      * Now we&#39;ll add a shrinktofit to the parent view. Notice that now the parent view does take up space, and you can see it through the semi-transparent subviews.
+      *
+      *     @example
+      *     &lt;view bgcolor=&quot;darkgrey&quot;&gt;
+      *       &lt;shrinktofit axis=&quot;both&quot; xpad=&quot;5&quot; ypad=&quot;10&quot;&gt;&lt;/shrinktofit&gt;
+      *
+      *       &lt;spacedlayout axis=&quot;y&quot;&gt;&lt;/spacedlayout&gt;
+      *
+      *       &lt;view width=&quot;100&quot; height=&quot;25&quot; bgcolor=&quot;lightpink&quot; opacity=&quot;.3&quot;&gt;&lt;/view&gt;
+      *       &lt;view width=&quot;100&quot; height=&quot;25&quot; bgcolor=&quot;plum&quot; opacity=&quot;.3&quot;&gt;&lt;/view&gt;
+      *       &lt;view width=&quot;100&quot; height=&quot;25&quot; bgcolor=&quot;lightblue&quot; opacity=&quot;.3&quot;&gt;&lt;/view&gt;
+      *     &lt;/view&gt;
       */
 <span id='dr-shrinktofit-attribute-axis'>/**
 </span>    * @attribute {String} [axis=x]
@@ -893,33 +885,8 @@
     * @return {void}
     * @private
     */
-<span id='dr-simplelayout'>/**
-</span>     * @class dr.simplelayout
-     * @extends dr.layout
-     * A layout that stacks views on the x or y axis.
-     *
-     *
-     *     @example
-     *     &lt;simplelayout axis=&quot;y&quot;&gt;&lt;/simplelayout&gt;
-     *
-     *     &lt;view width=&quot;100&quot; height=&quot;25&quot; bgcolor=&quot;lightpink&quot;&gt;&lt;/view&gt;
-     *     &lt;view width=&quot;100&quot; height=&quot;25&quot; bgcolor=&quot;plum&quot;&gt;&lt;/view&gt;
-     *     &lt;view width=&quot;100&quot; height=&quot;25&quot; bgcolor=&quot;lightblue&quot;&gt;&lt;/view&gt;
-     */
-<span id='dr-simplelayout-attribute-inset'>/**
-</span>        * @attribute {Number} [inset=0]
-        * Amount to inset the layout
-        */
-<span id='dr-simplelayout-attribute-spacing'>/**
-</span>        * @attribute {Number} [spacing=15]
-        * Amount of spacing between views
-        */
-<span id='dr-simplelayout-attribute-axis'>/**
-</span>        * @attribute {&quot;x&quot;/&quot;y&quot;} [axis=x]
-        * The axis to stack on
-        */
 <span id='dr-slider'>/**
-</span>     * @class dr.slider
+</span>     * @class dr.slider {UI Components}
      * @extends dr.view
      * An input component whose state is changed when the mouse is dragged.
      *
@@ -930,7 +897,7 @@
      *
      *     @example
      *     
-     *     &lt;simplelayout axis=&quot;x&quot; spacing=&quot;8&quot;&gt;&lt;/simplelayout&gt;
+     *     &lt;spacedlayout spacing=&quot;8&quot;&gt;&lt;/spacedlayout&gt;
      *     &lt;slider name=&quot;hslide&quot; y=&quot;5&quot; width=&quot;250&quot; height=&quot;10&quot; value=&quot;50&quot; bgcolor=&quot;#808080&quot;&gt;&lt;/slider&gt;
      *     &lt;text text=&quot;${Math.round(this.parent.hslide.value)}&quot; y=&quot;${this.parent.hslide.y + (this.parent.hslide.height-this.height)/2}&quot;&gt;&lt;/text&gt;
      */
@@ -966,7 +933,7 @@
         * The selected color of the slider.
         */
 <span id='dr-spacedlayout'>/**
-</span>      * @class dr.spacedlayout
+</span>      * @class dr.spacedlayout {Layout}
       * @extends dr.variablelayout
       * A variableLayout that positions views along an axis using an inset, 
       * outset and spacing value.
@@ -998,7 +965,7 @@
     * will orient them vertically.
     */
 <span id='dr-stats'>/**
-</span>     * @class dr.stats
+</span>     * @class dr.stats {Util}
      * @extends dr.view
      * wraps the three.js stats control which shows framerate over time
      *
@@ -1008,7 +975,7 @@
      *     &lt;stats&gt;&lt;/stats&gt;
      */
 <span id='dr-touch'>/**
-</span>     * @class dr.touch
+</span>     * @class dr.touch {Input}
      * @extends dr.node
      * Receives touch and multitouch data where available.
      */
@@ -1025,7 +992,7 @@
         * An array of x/y coordinates for all fingers, where available. See [https://developer.mozilla.org/en-US/docs/Web/Guide/Events/Touch_events](https://developer.mozilla.org/en-US/docs/Web/Guide/Events/Touch_events) for more details
         */
 <span id='dr-variablelayout'>/**
-</span>      * @class dr.variablelayout
+</span>      * @class dr.variablelayout {Layout}
       * @extends dr.constantlayout
       * Allows for variation based on the index and subview. An updateSubview 
       * method is provided that can be overriden to provide variable behavior.
@@ -1102,7 +1069,7 @@
     * @return {void}
     */
 <span id='dr-webpage'>/**
-</span>     * @class dr.webpage
+</span>     * @class dr.webpage {UI Components}
      * @extends dr.view
      * iframe component for embedding dreem code or html in a dreem application.
      * The size of the iframe matches the width/height of the view when the
@@ -1144,7 +1111,7 @@
         * static web pages, specify the src attribute, but do not use contents.
         */
 <span id='dr-wrappinglayout'>/**
-</span>      * @class dr.wrappinglayout
+</span>      * @class dr.wrappinglayout {Layout}
       * @extends dr.variablelayout
       * An extension of VariableLayout that positions views along an axis using
       * an inset, outset and spacing value. Views will be wrapped when they

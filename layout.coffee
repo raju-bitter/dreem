@@ -22,20 +22,38 @@
 # SOFTWARE.
 ###
 
+# Maps attribute names to CSS style names.
+stylemap =
+  x: 'marginLeft'
+  y: 'marginTop'
+  bgcolor: 'backgroundColor'
+  visible: 'display'
+  border: 'borderWidth'
+  borderstyle: 'borderStyle'
+  bordercolor: 'borderColor'
+
 hackstyle = do ->
   # hack jQuery to send a style event when CSS changes
-  stylemap= {left: 'x', top: 'y', 'background-color': 'bgcolor'}
+  monitoredJQueryStyleProps = {}
+  for prop, value of stylemap
+    monitoredJQueryStyleProps[value] = prop
+  
   origstyle = $.style
   styletap = (elem, name, value) ->
-    returnval = origstyle.apply(@, arguments)
-    name = stylemap[name] or name
+    attrName = monitoredJQueryStyleProps[name]
+    if !attrName?
+      # Normalize style names to camel case names by removing '-' and upper
+      # casing the subsequent character.
+      attrName = monitoredJQueryStyleProps[name.replace(/-([a-z])/i, (m) -> m[1].toUpperCase())]
+      monitoredJQueryStyleProps[name] = if attrName then attrName else name
+    
     view = elem.$view
-    if view[name] != value
+    if view[attrName] != value
     # if (view[name] != value and view?.events?[name])
       # console.log('sending style', name, elem.$view._locked) if sendstyle
-      view.setAttribute(name, value, true)
+      view.setAttribute(attrName, value, true)
 
-    returnval
+    origstyle.apply(@, arguments)
 
   return (active) ->
     if active
@@ -207,7 +225,7 @@ window.dr = do ->
       @
 
   ###*
-  # @class Eventable
+  # @class Eventable {Core Dreem}
   # @extends Module
   # The baseclass used by everything in dreem. Adds higher level event APIs.
   ###
@@ -218,6 +236,7 @@ window.dr = do ->
     ###
     @include Events
 
+    # A mapping of type coercion functions by attribute type.
     typemappings=
       number: parseFloat
       boolean: (val) -> (if (typeof val == 'string') then val == 'true' else (!! val))
@@ -254,9 +273,13 @@ window.dr = do ->
     # @param {String} name the name of the attribute to set
     # @param value the value to set to
     ###
-    setAttribute: (name, value, skipcoercion) ->
+    setAttribute: (name, value, skipcoercion, skipConstraintSetup, skipconstraintunregistration) ->
       # TODO: add support for dynamic constraints
       value = @_coerceType(name, value) unless skipcoercion
+
+      unless skipconstraintunregistration
+        if @constraints? and name of @constraints
+          @_unbindConstraint(name)
 
       @["set_#{name}"]?(value)
       @[name] = value
@@ -301,6 +324,7 @@ window.dr = do ->
 
   querystring = window.location.search
   debug = querystring.indexOf('debug') > 0
+  test = querystring.indexOf('test') > 0
   compiler = do ->
     nocache = querystring.indexOf('nocache') > 0
     strict = querystring.indexOf('strict') > 0
@@ -417,7 +441,7 @@ window.dr = do ->
       constraint._bindConstraints()
     constraintScopes = []
   ###*
-  # @class dr.node
+  # @class dr.node {Core Dreem}
   # @extends Eventable
   # The nonvisual base class for everything in dreem. Handles parent/child relationships between tags.
   #
@@ -469,7 +493,7 @@ window.dr = do ->
   #
   #     <inchesconverter id="conv" inchesval="2"></inchesconverter>
   #
-  #     <simplelayout axis="y"></simplelayout>
+  #     <spacedlayout axis="y"></spacedlayout>
   #     <text text="${conv.inchesval + ' inches'}"></text>
   #     <text text="${conv.centimetersval() + ' cm'}"></text>
   #     <text text="${conv.metersval() + ' m'}"></text>
@@ -646,12 +670,12 @@ window.dr = do ->
           scope.unbind(ev, handler.callback)
       return
 
-    # Bind an attribute to an event expression, handler, or fall back to setAttribute()
+    # Bind an attribute to a constraint, event expression/handler or fall back to setAttribute()
     bindAttribute: (name, value, tagname) ->
       constraint = value.match?(matchConstraint) if value
       if constraint
         # console.log('applying constraint', name, constraint[1])
-        @_applyConstraint(name, constraint[1])
+        @setConstraint(name, constraint[1], true)
       else if name.indexOf('on') == 0
         name = name.substr(2)
         # console.log('binding to event expression', name, value, @)
@@ -659,7 +683,7 @@ window.dr = do ->
       else
         @setAttribute(name, value)
 
-    # public API to initialize constraints
+    # public API to initialize constraints for a group of nodes, used by replicator
     initConstraints: ->
       _initConstraints()
       @
@@ -707,10 +731,16 @@ window.dr = do ->
         scope[methodname] = method
       # console.log('installed method', methodname, scope, scope[methodname])
 
-    # applies a constraint, must call _initConstraints for constraints to be bound
-    _applyConstraint: (property, expression) ->
-      @constraints ?= {}
+    # sets a constraint, binding it immediately unless skipbinding is true.
+    # If skipbinding is true, call _bindConstraints() or _initConstraints()
+    # to bind constraints later.
+    setConstraint: (property, expression, skipbinding) ->
       # console.log 'adding constraint', property, expression, @
+      if @constraints?
+        @_unbindConstraint(property) if property of @constraints
+      else
+        @constraints = {}
+
       @constraints[property] =
         expression: expression
         bindings: {}
@@ -724,30 +754,49 @@ window.dr = do ->
         bindings[bindexpression].push(scope)
         # console.log 'applied', scope.property, bindexpression, 'for', @
 
+      @_bindConstraints() unless skipbinding
       # console.log 'matched constraint', property, @, expression
       return
 
+    # compiles a function that looks bindexpression up later in the local scope
     _valueLookup: (bindexpression) ->
       compiler.compile('return ' + bindexpression).bind(@)
+
+    # remove a constraint, unbinding from all its dependencies
+    _unbindConstraint: (property) ->
+      return unless property of @constraints
+      constraint = @constraints[property]
+      {callback, callbackbindings} = constraint
+      # console.log "removing constraint for #{property}", constraint, callback, callbackbindings
+
+      for prop, i in callbackbindings by 2
+        scope = callbackbindings[i + 1]
+        # console.log "removing binding", prop, scope, callback
+        scope.unbind?(prop, callback)
+
+      @constraints[property] = null
+      return
 
     _bindConstraints: ->
       for name, constraint of @constraints
         {bindings, expression} = constraint
+        constraint.callbackbindings ?= []
         fn = @_valueLookup(expression)
         # console.log 'binding constraint', name, expression, @
-        constraint = @_constraintCallback(name, fn)
+        constraint.callback = @_constraintCallback(name, fn)
         for bindexpression, bindinglist of bindings
           boundref = @_valueLookup(bindexpression)()
-          if not boundref
-            showWarnings(["Could not bind constraint #{bindexpression}"])
+          if not boundref or not boundref.bind?
+            showWarnings(["Could not bind to #{bindexpression} of constraint #{expression} for #{@$tagname}#{if @id then '#' + @id else if @name then '.' + name else ''}"])
             continue
-          boundref ?= boundref.$view
+
           for binding in bindinglist
             property = binding.property
             # console.log 'binding to', property, 'on', boundref
-            boundref.bind?(property, constraint)
+            boundref.bind(property, constraint.callback)
+            constraint.callbackbindings.push(property, boundref)
 
-        @setAttribute(name, fn())
+        @setAttribute(name, fn(), false, false, true)
       return
 
     _bindHandlers: (isLate) ->
@@ -796,7 +845,7 @@ window.dr = do ->
       # console.log('binding to constraint function', name, fn, @)
       return `(function constraintCallback(){`
       # console.log 'setting', name, fn(), @
-      @.setAttribute(name, fn())
+      @.setAttribute(name, fn(), false, false, true)
       `}).bind(this)`
 
     set_parent: (parent) ->
@@ -889,6 +938,12 @@ window.dr = do ->
       ###
       @sendEvent('destroy', @)
 
+      # unbind constraints
+      if @constraints
+        for property of @constraints
+          @_unbindConstraint(property)
+
+      # stop events
       if @listeningTo
         @stopListening()
       @unbind()
@@ -904,11 +959,6 @@ window.dr = do ->
 
       @_removeFromParent('subnodes') unless skipevents
 
-  stylemap =
-    x: 'left'
-    y: 'top'
-    bgcolor: 'backgroundColor'
-    visible: 'display'
   ###*
   # @class Sprite
   # @private
@@ -975,8 +1025,6 @@ window.dr = do ->
       # console.log 'sprite animate', arguments[0], @jqel
       @jqel.animate.apply(@jqel, arguments)
 
-
-
     set_clickable: (clickable) ->
       @__clickable = clickable
       @__updatePointerEvents()
@@ -1014,7 +1062,7 @@ window.dr = do ->
         if @__clickable || @__scrollable
           'auto'
         else
-          ''
+          'none'
       , true)
 
     destroy: ->
@@ -1079,12 +1127,6 @@ window.dr = do ->
       $(input).on('focus blur', @handle)
       @input = input
 
-    getInputtextHeight: () ->
-      h = parseInt($(@input).css('height'))
-      borderH = parseInt($(@el).css('border-top-width')) + parseInt($(@el).css('border-bottom-width'))
-      paddingH = parseInt($(@el).css('padding-top')) + parseInt($(@el).css('padding-bottom'))
-      return h + borderH + paddingH
-
     getAbsolute: () ->
       @jqel ?= $(@el)
       pos = @jqel.offset()
@@ -1115,11 +1157,37 @@ window.dr = do ->
         console.warn "Setting unknown CSS property #{name} = #{value} on ", @el.$view, stylemap, internal
       ss2(name, value, internal, el)
 
-  # internal attributes ignored by class declarations and view styles
-  ignoredAttributes = {parent: true, id: true, name: true, extends: true, type: true, scriptincludes: true}
+  # Attributes that shouldn't be applied visually and will thus not be
+  # set on the sprite.
+  hiddenAttributes = {
+    text: true,
+    $tagname: true,
+    data: true,
+    replicator: true,
+    class: true,
+    clip: true,
+    clickable: true,
+    scrollable: true,
+    $textcontent: true,
+    resize: true,
+    multiline: true,
+    ignorelayout: true
+  }
+
+  # Internal attributes ignored by class declarations and view styles
+  ignoredAttributes = {
+    parent: true, 
+    id: true, 
+    name: true, 
+    extends: true, 
+    type: true, 
+    scriptincludes: true
+  }
+
+
   ###*
   # @aside guide constraints
-  # @class dr.view
+  # @class dr.view {UI Components}
   # @extends dr.node
   # The visual base class for everything in dreem. Views extend dr.node to add the ability to set and animate visual attributes, and interact with the mouse.
   #
@@ -1288,32 +1356,23 @@ window.dr = do ->
       ###
 
       @subviews = []
-      types = {x: 'number', y: 'number', width: 'number', height: 'number', clickable: 'boolean', clip: 'boolean', scrollable: 'boolean', visible: 'boolean', 'border': 'number', padding: 'number'}
-      defaults = {x:0, y:0, width:0, height:0, clickable:false, clip:false, scrollable:false, visible:true, bordercolor:'transparent', borderstyle:'solid', border:0, padding:0}
+      types = {
+        x: 'number', y: 'number', width: 'number', height: 'number', 
+        clickable: 'boolean', clip: 'boolean', scrollable: 'boolean', visible: 'boolean', 
+        border: 'number', padding: 'number'
+      }
+      defaults = {
+        x:0, y:0, width:0, height:0, 
+        clickable:false, clip:false, scrollable:false, visible:true, 
+        bordercolor:'transparent', borderstyle:'solid', border:0, 
+        padding:0
+      }
 
       for key, type of attributes.$types
         types[key] = type
       attributes.$types = types
 
       @_setDefaults(attributes, defaults)
-
-      attributes['width'] = @_sizeConstraint(attributes['width'], "width") if @_isPercent(attributes['width'])
-      attributes['height'] = @_sizeConstraint(attributes['height'], "height") if @_isPercent(attributes['height'])
-
-      if (attributes['parent'].padding)
-        attributes['x'] += attributes['parent'].padding
-        attributes['y'] += attributes['parent'].padding
-
-      attributes['border-width'] = attributes['border']
-      delete attributes['border'] #so it doesn't get passed through to the sprite
-
-#      so these do get passed through to the sprite with the correct css names
-      attributes['border-color'] = attributes['bordercolor']
-      attributes['border-style'] = attributes['borderstyle']
-      attributes['padding-left'] = attributes['padding'] if 'padding-left' of attributes
-      attributes['padding-right'] = attributes['padding'] if 'padding-right' of attributes
-      attributes['padding-top'] = attributes['padding'] if 'padding-top' of attributes
-      attributes['padding-bottom'] = attributes['padding'] if 'padding-bottom' of attributes
 
       if (el instanceof View)
         el = el.sprite
@@ -1326,22 +1385,73 @@ window.dr = do ->
     _isPercent: (value) ->
       typeof value == 'string' && value.indexOf('%') > -1;
 
-    innerSize: (percent, dim) ->
-      return (@[dim] * parseInt(percent)/100.0) - @['border-width']*2 - @padding*2
-
-    _sizeConstraint: (percent, dim) ->
-      return "${this.parent.innerSize ? this.parent.innerSize('#{percent}', '#{dim}') : $(this.parent).#{dim}()}"
-
     _createSprite: (el, attributes) ->
       @sprite = new Sprite(el, @, attributes.$tagname)
 
-    setAttribute: (name, value, skipstyle) ->
+    setAttribute: (name, value, skipstyle, skipConstraintSetup, skipconstraintunregistration) ->
+      # catch percent constraints
+      if (!skipConstraintSetup)
+        switch name
+          when 'width','x'
+            if @__setupPercentConstraint(name, value, 'innerwidth') then return
+          when 'height','y'
+            if @__setupPercentConstraint(name, value, 'innerheight') then return
+      
       value = @_coerceType(name, value)
+      
+      # Protect from invalid values
+      switch name
+        when 'width','height','border','padding'
+          value = Math.max(0, value)
+      
       if not (skipstyle or name of ignoredAttributes or name of hiddenAttributes or @[name] == value)
         # console.log 'setting style', name, value, @
         @sprite.setStyle(name, value)
-      super(name, value, true)
-
+      super(name, value, true, skipConstraintSetup, skipconstraintunregistration)
+    
+    __setupPercentConstraint: (name, value, axis) ->
+      funcKey = '__percentFunc' + name
+      oldFunc = @[funcKey]
+      parent = @parent
+      
+      # Handle rootview case using dr.window
+      if !(parent instanceof Node)
+        parent = dr.window
+        axis = axis.substring(5)
+      
+      if oldFunc
+        @stopListening(parent, axis, oldFunc)
+        delete @[funcKey]
+      if @_isPercent(value)
+        self = @
+        scale = parseInt(value)/100
+        func = @[funcKey] = () ->
+          self.setAttribute(name, parent[axis] * scale, false, true)
+        @listenTo(parent, axis, func)
+        func.call()
+        return true
+    
+    set_width: (width) ->
+      @setAttribute('innerwidth', width - 2*(@border + @padding), true)
+    
+    set_height: (height) ->
+      @setAttribute('innerheight', height - 2*(@border + @padding), true)
+    
+    set_border: (border) ->
+      @__updateInnerMeasures(2*(border + @padding))
+    
+    set_padding: (padding) ->
+      @__updateInnerMeasures(2*(@border + padding))
+      
+    __updateInnerMeasures: (inset) ->
+      # Ensures innerwidth and innerheight will both be correct before 
+      # oninnerwidth and oninnerheight fire. Needed by wrappinglayout.
+      @innerwidth = @width - inset
+      @innerheight = @height - inset
+      
+      @setAttribute('innerwidth', @width - inset, true)
+      @setAttribute('innerheight', @height - inset, true)
+    
     set_clickable: (clickable) ->
       @sprite.set_clickable(clickable)
       # super?(clickable)
@@ -1477,12 +1587,12 @@ window.dr = do ->
       @sprite.set_class(classname)
 
   ###*
-  # @class dr.inputtext
+  # @class dr.inputtext {UI Components, Input}
   # @extends dr.view
   # Provides an editable input text field.
   #
   #     @example
-  #     <simplelayout axis="y"></simplelayout>
+  #     <spacedlayout axis="y"></spacedlayout>
   #
   #     <text text="Enter your name"></text>
   #
@@ -1526,17 +1636,26 @@ window.dr = do ->
 
       super
 
-      @setAttribute('height', @sprite.getInputtextHeight()) unless @height
+      @setAttribute('height', @_getDefaultHeight()) unless @height
 
       @listenTo(@, 'change', @_handleChange)
 
-      @listenTo(@, 'width',
-        (w) ->
-          @sprite.setStyle('width', @innerSize('100%', 'width'), true, @sprite.input);
+      @listenTo(@, 'innerwidth',
+        (iw) ->
+          @sprite.setStyle('width', iw, true, @sprite.input)
       )
-      @listenTo(@, 'height',
-        (h) ->
-          @sprite.setStyle('height', @innerSize('100%', 'height'), true, @sprite.input);
+      @sprite.setStyle('width', @innerwidth, true, @sprite.input)
+      @listenTo(@, 'innerheight',
+        (ih) ->
+          @sprite.setStyle('height', ih, true, @sprite.input)
+      )
+      @sprite.setStyle('height', @innerheight, true, @sprite.input)
+      
+      # fixes spec/inputext_spec.rb 'can be clicked into' by forwarding user-generated click events
+      # a click() without focus() wasn't enough... See http://stackoverflow.com/questions/210643/in-javascript-can-i-make-a-click-event-fire-programmatically-for-a-file-input
+      @listenTo(@, 'click',
+        () ->
+          @sprite.input.focus()
       )
 
     _createSprite: (el, attributes) ->
@@ -1544,12 +1663,15 @@ window.dr = do ->
       attributes.text ||= @sprite.getText(true)
       @sprite.setText('')
       multiline = @_coerceType('multiline', attributes.multiline, 'boolean')
-      p = attributes['padding'] || 0
-      b = attributes['border-width'] || 0
-      w = attributes.width - p*2 - b*2
-      h = attributes.height - p*2 - b*2
-      @sprite.createInputtextElement('', multiline, w, h)
+      @sprite.createInputtextElement('', multiline, attributes.width, attributes.height)
 
+    _getDefaultHeight: () ->
+      h = parseInt($(@sprite.input).css('height'))
+      domElem = $(@sprite.el)
+      borderH = parseInt(domElem.css('border-top-width')) + parseInt(domElem.css('border-bottom-width'))
+      paddingH = parseInt(domElem.css('padding-top')) + parseInt(domElem.css('padding-bottom'))
+      return h + borderH + paddingH
+      
     _handleChange: () ->
       return unless @replicator
       # attempt to coerce to the current type if it was a boolean or number (bad idea?)
@@ -1571,7 +1693,7 @@ window.dr = do ->
       @sprite.value(text)
 
   ###*
-  # @class dr.text
+  # @class dr.text {UI Components}
   # @extends dr.view
   # Text component that supports single and multi-line text.
   #
@@ -1720,21 +1842,6 @@ window.dr = do ->
     console.error out
 
 
-  # a collection of attributes that shouldn't be applied visually.
-  hiddenAttributes = {
-    text: true,
-    $tagname: true,
-    data: true,
-    replicator: true,
-    class: true,
-    clip: true,
-    clickable: true,
-    scrollable: true,
-    $textcontent: true,
-    resize: true,
-    multiline: true,
-    ignorelayout: true,
-  }
   dom = do ->
     getChildren = (el) ->
       child for child in el.childNodes when child.nodeType == 1 and child.localName in specialtags
@@ -1968,7 +2075,7 @@ window.dr = do ->
         }).always(finalcallback)
 
       # call the validator after everything loads
-      loadIncludes(validator)
+      loadIncludes(if test then finalcallback else validator)
 
     specialtags = ['handler', 'method', 'attribute', 'setter', 'include']
     # tags built into the browser that should be ignored, from http://www.w3.org/TR/html-markup/elements.html
@@ -2160,7 +2267,7 @@ window.dr = do ->
       writeCSS: writeCSS
 
     ###*
-  # @class dr.state
+  # @class dr.state {Core Dreem}
   # @extends dr.node
   # Allows a group of attributes, methods, handlers and instances to be removed and applied as a group.
   # 
@@ -2169,7 +2276,7 @@ window.dr = do ->
   # Currently, states must end with the string 'state' in their name to work properly.
   #
   #     @example
-  #     <simplelayout axis="y"></simplelayout>
+  #     <spacedlayout axis="y"></spacedlayout>
   #     <view id="square" width="100" height="100" bgcolor="lightgrey">
   #       <attribute name="ispink" type="boolean" value="false"></attribute>
   #       <state name="pinkstate" applied="${this.parent.ispink}">
@@ -2304,7 +2411,7 @@ window.dr = do ->
 
 
   ###*
-  # @class dr.class
+  # @class dr.class {Core Dreem}
   # Allows new tags to be created. Classes only be created with the &lt;class>&lt;/class> tag syntax. 
   # 
   # Classes can extend any other class, and they extend dr.view by default. 
@@ -2322,7 +2429,7 @@ window.dr = do ->
   #
   #     <tile></tile>
   #
-  # Now we'll extend the tile class with a class called 'labeltile', which contains a label inside of the box. We'll declare one each of tile and labeltile, and position them with a simplelayout.
+  # Now we'll extend the tile class with a class called 'labeltile', which contains a label inside of the box. We'll declare one each of tile and labeltile, and position them with a spacedlayout.
   #
   #     @example
   #     <class name="tile" extends="view" bgcolor="thistle" width="100" height="100"></class>
@@ -2331,7 +2438,7 @@ window.dr = do ->
   #       <text text="Tile"></text>
   #     </class>
   #
-  #     <simplelayout axis="x"></simplelayout>
+  #     <spacedlayout></spacedlayout>
   #     <tile></tile>
   #     <labeltile></labeltile>
   #
@@ -2345,7 +2452,7 @@ window.dr = do ->
   #       <text text="${this.parent.label}"></text>
   #     </class>
   #
-  #     <simplelayout axis="x"></simplelayout>
+  #     <spacedlayout></spacedlayout>
   #     <tile></tile>
   #     <labeltile label="The Tile"></labeltile>
   #
@@ -2484,20 +2591,20 @@ window.dr = do ->
         return parent
 
   ###*
-  # @class dr.layout
+  # @class dr.layout {Layout}
   # @extends dr.node
   # The base class for all layouts. 
   #
   # When a new layout is added, it will automatically create and add itself to a layouts array in its parent. In addition, an onlayouts event is fired in the parent when the layouts array changes. This allows the parent to access the layout(s) later.
   #
-  # Here is a view that contains both a simplelayout and a boundslayout.
+  # Here is a view that contains both a spacedlayout and a shrinktofit.
   #
   #     @example
-  #     <simplelayout axis="y"></simplelayout>
+  #     <spacedlayout axis="y"></spacedlayout>
   #     <view bgcolor="oldlace">
-  #       <boundslayout></boundslayout>
+  #       <shrinktofit axis="both"></shrinktofit>
   #
-  #       <simplelayout axis="x"></simplelayout>
+  #       <spacedlayout></spacedlayout>
   #
   #       <view width="50" height="50" bgcolor="lightpink" opacity=".3"></view>
   #       <view width="50" height="50" bgcolor="plum" opacity=".3"></view>
@@ -2510,126 +2617,9 @@ window.dr = do ->
   #
   #     <text id="output" multiline="true" width="300"></text>
   #
-  # Here we create diagonlayout, a subclass of layout that lays out the subviews in a diagonal formation. The update method sets the positions of the subview, and the onsubview handler attaches event listeners to the subviews as they are added so update is called if their dimensions or visibility are updated.
-  #
-  #     @example
-  #     <class name="diagonlayout" extends="layout">
-  #       <handler event="onsubview" args="subview">
-  #         this.listenTo(subview, 'visible', this.update);
-  #         this.listenTo(subview, 'width', this.update);
-  #         this.listenTo(subview, 'height', this.update);
-  #       </handler>
-  #       <method name="update" args="value, sender">
-  #         var posX = 0;
-  #         var posY = 0;
-  #         for (var i=0, l = this.parent.subviews.length; i < l; i++) {
-  #           var subview = this.parent.subviews[i];
-  #           if (subview.ignorelayout || !subview.visible) {
-  #             continue;
-  #           }
-  #
-  #           subview.setAttribute('x', posX);
-  #           subview.setAttribute('y', posY);
-  #
-  #           posX += subview.width;
-  #           posY += subview.height;
-  #         }
-  #       </method>
-  #     </class>
-  #
-  #     <diagonlayout></diagonlayout>
-  #     <view id="v1" width="50" height="50" bgcolor="Aqua"></view>
-  #     <view id="v2" width="50" height="50" bgcolor="HotPink"></view>
-  #     <view id="v3" width="50" height="50" bgcolor="MediumPurple"></view>
-  #
-  #     <labelbutton text="click me">
-  #       <handler event="onclick">
-  #         v1.setAttribute('width', 100);
-  #         v2.setAttribute('height', 150);
-  #       </handler>
-  #     </labelbutton>
-  #
   #
   ###
   class Layout extends Node
-    constructor: (el, attributes = {}) ->
-      @locked = true
-      super
-      # listen for new subviews
-      @listenTo(@parent, 'subviews', @_added)
-      @listenTo(@parent, 'init', @update)
-      @parent.layouts ?= []
-      @parent.layouts.push(@)
-      @parent.sendEvent('layouts', @parent.layouts)
-
-      # iterate through subviews that already exist
-      subviews = @parent.subviews
-      if subviews
-        for subview in subviews
-          @_added(subview)
-      @locked = false
-      @update()
-      # console.log('layout', attributes, @)
-
-    # called when a new subview is added to the parent view
-    _added: (child) =>
-      # console.log 'added layout', child, @
-      if child
-        ###*
-        # @event onsubview 
-        # Fired when the layout has a new subview. Used to listen for events on the view that the layout cares about.
-        # @param {dr.view} child The subview that was added
-        ###
-        @sendEvent('subview', child) unless child.ignorelayout
-      @update(null, child)
-
-    # 
-    ###*
-    # @method update
-    # @abstract
-    # Called when the layout should be updated. Must be implemented to update the position of the subviews
-    # @param value The value received from the node that updated
-    # @param {dr.node} sender The node that updated
-    ###
-    # update: (value, sender) =>
-      # console.log 'update layout', sender
-      # return if @skip()
-    
-    ###*
-    # Determines if a layout should be updated or not, usually called from update
-    # @returns {Boolean} If true, skip updating the layout
-    ###
-    skip: ->
-      true if @locked or (not @inited) or (not @parent?.subviews) or (@parent.subviews.length == 0)
-
-    destroy: (skipevents) ->
-      @locked = true
-      # console.log 'destroy layout', @
-      super
-      @_removeFromParent('layouts') unless skipevents
-
-    set_locked: (locked) ->
-      changed = @locked != locked
-      ###*
-      # @property {Boolean} locked
-      # If true, this layout will not update
-      ###
-      @locked = locked
-      ###*
-      # @event onlocked 
-      # Fired when the layout is locked
-      # @param {Boolean} locked If true, the layout is locked
-      ###
-      @sendEvent('locked', locked)
-      # console.log 'set_locked', locked
-      @update() if (changed and not locked)
-
-  ###*
-  # @class dr.layoot
-  # @extends dr.node
-  # The base class for all layouts. 
-  ###
-  class Layoot extends Node
     constructor: (el, attributes = {}) ->
       @locked = true
       @subviews = []
@@ -2813,7 +2803,7 @@ window.dr = do ->
       # console.log 'stop'
 
   ###*
-  # @class dr.idle
+  # @class dr.idle {Util}
   # @extends Eventable
   # Sends onidle events when the application is active and idle.
   #
@@ -2822,7 +2812,7 @@ window.dr = do ->
   #       milis.setAttribute('text', idleStatus);
   #     </handler>
   #
-  #     <simplelayout axis="x"></simplelayout>
+  #     <spacedlayout></spacedlayout>
   #     <text text="Miliseconds since app started: "></text>
   #     <text id="milis"></text>
   ###
@@ -2854,17 +2844,9 @@ window.dr = do ->
 
   # singleton that listens for mouse events. Holds data about the most recent left and top mouse coordinates
   mouseEvents = ['click', 'mouseover', 'mouseout', 'mousedown', 'mouseup']
-  skipEvent = (e) ->
-    if e.stopPropagation
-      e.stopPropagation()
-    if e.preventDefault  
-      e.preventDefault()
-    e.cancelBubble = true
-    e.returnValue = false
-    return false;
 
   ###*
-  # @class dr.mouse
+  # @class dr.mouse {Input}
   # @extends Eventable
   # Sends mouse events. Often used to listen to onmouseover/x/y events to follow the mouse position.
   #
@@ -2923,6 +2905,15 @@ window.dr = do ->
         document.addEventListener('touchend', @touchHandler, true)
         document.addEventListener('touchcancel', @touchHandler, true)
 
+    skipEvent = (e) ->
+      if e.stopPropagation
+        e.stopPropagation()
+      if e.preventDefault  
+        e.preventDefault()
+      e.cancelBubble = true
+      e.returnValue = false
+      return false;
+
     startEventTest: () ->
       @events['mousemove']?.length or @events['x']?.length or @events['y']?.length
 
@@ -2933,8 +2924,8 @@ window.dr = do ->
                                 first.clientX, first.clientY, false,
                                 false, false, false, 0, null)
       first.target.dispatchEvent(simulatedEvent)
-      if first.target.$view and first.target.$view.$tagname isnt 'inputtext'
-        event.preventDefault()
+      if first.target.$view
+        skipEvent(event) unless first.target.$view instanceof InputText
 
     lastTouchDown = null
     lastTouchOver = null
@@ -2971,7 +2962,7 @@ window.dr = do ->
       if view
         if type is 'mousedown'
           @_lastMouseDown = view
-          skipEvent(event)
+          skipEvent(event) unless view instanceof InputText
       
       if type is 'mouseup' and @_lastMouseDown and @_lastMouseDown != view
         # send onmouseup and onmouseupoutside to the view that the mouse originally went down
@@ -3031,7 +3022,7 @@ window.dr = do ->
 
 
   ###*
-  # @class dr.window
+  # @class dr.window {Util}
   # @extends Eventable
   # Sends window resize events. Often used to dynamically reposition views as the window size changes.
   #
@@ -3100,14 +3091,14 @@ window.dr = do ->
 
 
   ###*
-  # @class dr.keyboard
+  # @class dr.keyboard {Input}
   # @extends Eventable
   # Sends keyboard events.
   #
   # You might want to track specific keyboard events when text is being entered into an input box. In this example we listen for the enter key and display the value.
   #
   #     @example
-  #     <simplelayout axis="y" spacing="25"></simplelayout>
+  #     <spacedlayout axis="y" spacing="25"></spacedlayout>
   #     <inputtext id="nameinput" bgcolor="lightgrey"></inputtext>
   #     <text id="keycode" text="Key Code:"></text>
   #     <text id="entered"></text>
@@ -3184,7 +3175,7 @@ window.dr = do ->
       # console.log 'handleKeyboard', type, target, out, event
 
   ###*
-  # @class dr
+  # @class dr {Core Dreem}
   # Holds builtin and user-created classes and public APIs.
   # 
   # All classes listed here can be invoked with the declarative syntax, e.g. &lt;node>&lt;/node> or &lt;view>&lt;/view>
@@ -3199,7 +3190,6 @@ window.dr = do ->
     keyboard: new Keyboard()
     window: new Window()
     layout: Layout
-    layoot: Layoot
     idle: new Idle()
     state: State
     ###*
@@ -3215,7 +3205,7 @@ window.dr = do ->
 
   # virtual classes declared for documentation purposes
   ###*
-  # @class dr.method
+  # @class dr.method {Core Dreem}
   # Declares a member function in a node, view, class or other class instance. Methods can only be created with the &lt;method>&lt;/method> tag syntax.
   # 
   # If a method overrides an existing method, any existing (super) method(s) will be called first automatically.
@@ -3266,7 +3256,7 @@ window.dr = do ->
   #       </method>
   #     </class>
   #
-  #     <simplelayout axis="x"></simplelayout>
+  #     <spacedlayout></spacedlayout>
   #
   #     <square id="square1"></square>
   #     <bluesquare id="square2"></bluesquare>
@@ -3313,7 +3303,7 @@ window.dr = do ->
   ###
 
   ###*
-  # @class dr.handler
+  # @class dr.handler {Core Dreem}
   # Declares a handler in a node, view, class or other class instance. Handlers can only be created with the `<handler></handler>` tag syntax.
   #
   # Handlers are called when an event fires with new value, if available.
@@ -3384,7 +3374,7 @@ window.dr = do ->
   ###
 
   ###*
-  # @class dr.attribute
+  # @class dr.attribute {Core Dreem}
   # Adds a variable to a node, view, class or other class instance. Attributes can only be created with the &lt;attribute>&lt;/attribute> tag syntax.
   # 
   # Attributes allow classes to declare new variables with a specific type and default value. 
@@ -3414,7 +3404,7 @@ window.dr = do ->
   #       </handler>
   #     </class>
   # 
-  #     <simplelayout></simplelayout>
+  #     <spacedlayout></spacedlayout>
   #     <person></person>
   #     <person mood="sad"></person>
   #
@@ -3433,7 +3423,7 @@ window.dr = do ->
   #       <attribute name="size" type="number" value="20"></attribute>
   #     </class>
   # 
-  #     <simplelayout></simplelayout>
+  #     <spacedlayout></spacedlayout>
   #     <person></person>
   #     <person mood="sad" size="50"></person>
   ###

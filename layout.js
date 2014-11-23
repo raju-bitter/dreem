@@ -25,30 +25,45 @@
  */
 
 (function() {
-  var hackstyle,
+  var hackstyle, stylemap,
     __slice = [].slice,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
+  stylemap = {
+    x: 'marginLeft',
+    y: 'marginTop',
+    bgcolor: 'backgroundColor',
+    visible: 'display',
+    border: 'borderWidth',
+    borderstyle: 'borderStyle',
+    bordercolor: 'borderColor'
+  };
+
   hackstyle = (function() {
-    var origstyle, stylemap, styletap;
-    stylemap = {
-      left: 'x',
-      top: 'y',
-      'background-color': 'bgcolor'
-    };
+    var monitoredJQueryStyleProps, origstyle, prop, styletap, value;
+    monitoredJQueryStyleProps = {};
+    for (prop in stylemap) {
+      value = stylemap[prop];
+      monitoredJQueryStyleProps[value] = prop;
+    }
     origstyle = $.style;
     styletap = function(elem, name, value) {
-      var returnval, view;
-      returnval = origstyle.apply(this, arguments);
-      name = stylemap[name] || name;
-      view = elem.$view;
-      if (view[name] !== value) {
-        view.setAttribute(name, value, true);
+      var attrName, view;
+      attrName = monitoredJQueryStyleProps[name];
+      if (attrName == null) {
+        attrName = monitoredJQueryStyleProps[name.replace(/-([a-z])/i, function(m) {
+          return m[1].toUpperCase();
+        })];
+        monitoredJQueryStyleProps[name] = attrName ? attrName : name;
       }
-      return returnval;
+      view = elem.$view;
+      if (view[attrName] !== value) {
+        view.setAttribute(attrName, value, true);
+      }
+      return origstyle.apply(this, arguments);
     };
     return function(active) {
       if (active) {
@@ -60,7 +75,7 @@
   })();
 
   window.dr = (function() {
-    var Class, Eventable, Events, Idle, InputText, Keyboard, Layoot, Layout, Module, Mouse, Node, Sprite, StartEventable, State, Text, View, Window, capabilities, compiler, constraintScopes, debug, dom, exports, fcamelCase, hiddenAttributes, idle, ignoredAttributes, mixOf, moduleKeywords, mouseEvents, otherstyles, querystring, rdashAlpha, showWarnings, skipEvent, ss, ss2, stylemap, triggerlock, warnings, _initConstraints;
+    var Class, Eventable, Events, Idle, InputText, Keyboard, Layout, Module, Mouse, Node, Sprite, StartEventable, State, Text, View, Window, capabilities, compiler, constraintScopes, debug, dom, exports, fcamelCase, hiddenAttributes, idle, ignoredAttributes, mixOf, moduleKeywords, mouseEvents, otherstyles, querystring, rdashAlpha, showWarnings, ss, ss2, test, triggerlock, warnings, _initConstraints;
     mixOf = function() {
       var Mixed, base, i, method, mixin, mixins, name, _i, _ref;
       base = arguments[0], mixins = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
@@ -307,7 +322,7 @@
     })();
 
     /**
-     * @class Eventable
+     * @class Eventable {Core Dreem}
      * @extends Module
      * The baseclass used by everything in dreem. Adds higher level event APIs.
      */
@@ -390,10 +405,15 @@
        * @param value the value to set to
        */
 
-      Eventable.prototype.setAttribute = function(name, value, skipcoercion) {
+      Eventable.prototype.setAttribute = function(name, value, skipcoercion, skipConstraintSetup, skipconstraintunregistration) {
         var _name;
         if (!skipcoercion) {
           value = this._coerceType(name, value);
+        }
+        if (!skipconstraintunregistration) {
+          if ((this.constraints != null) && name in this.constraints) {
+            this._unbindConstraint(name);
+          }
         }
         if (typeof this[_name = "set_" + name] === "function") {
           this[_name](value);
@@ -454,6 +474,7 @@
     };
     querystring = window.location.search;
     debug = querystring.indexOf('debug') > 0;
+    test = querystring.indexOf('test') > 0;
     compiler = (function() {
       var cacheData, cacheKey, compile, compileCache, compiledebug, exports, findBindings, nocache, scriptCache, strict, transform, usecache;
       nocache = querystring.indexOf('nocache') > 0;
@@ -611,7 +632,7 @@
     };
 
     /**
-     * @class dr.node
+     * @class dr.node {Core Dreem}
      * @extends Eventable
      * The nonvisual base class for everything in dreem. Handles parent/child relationships between tags.
      *
@@ -663,7 +684,7 @@
      *
      *     <inchesconverter id="conv" inchesval="2"></inchesconverter>
      *
-     *     <simplelayout axis="y"></simplelayout>
+     *     <spacedlayout axis="y"></spacedlayout>
      *     <text text="${conv.inchesval + ' inches'}"></text>
      *     <text text="${conv.centimetersval() + ' cm'}"></text>
      *     <text text="${conv.metersval() + ' m'}"></text>
@@ -889,7 +910,7 @@
           constraint = typeof value.match === "function" ? value.match(matchConstraint) : void 0;
         }
         if (constraint) {
-          return this._applyConstraint(name, constraint[1]);
+          return this.setConstraint(name, constraint[1], true);
         } else if (name.indexOf('on') === 0) {
           name = name.substr(2);
           return this.bind(name, _eventCallback(name, value, this, tagname));
@@ -958,9 +979,13 @@
         }
       };
 
-      Node.prototype._applyConstraint = function(property, expression) {
+      Node.prototype.setConstraint = function(property, expression, skipbinding) {
         var bindexpression, bindings, scope, scopes, _i, _len;
-        if (this.constraints == null) {
+        if (this.constraints != null) {
+          if (property in this.constraints) {
+            this._unbindConstraint(property);
+          }
+        } else {
           this.constraints = {};
         }
         this.constraints[property] = {
@@ -977,10 +1002,30 @@
           }
           bindings[bindexpression].push(scope);
         }
+        if (!skipbinding) {
+          this._bindConstraints();
+        }
       };
 
       Node.prototype._valueLookup = function(bindexpression) {
         return compiler.compile('return ' + bindexpression).bind(this);
+      };
+
+      Node.prototype._unbindConstraint = function(property) {
+        var callback, callbackbindings, constraint, i, prop, scope, _i, _len;
+        if (!(property in this.constraints)) {
+          return;
+        }
+        constraint = this.constraints[property];
+        callback = constraint.callback, callbackbindings = constraint.callbackbindings;
+        for (i = _i = 0, _len = callbackbindings.length; _i < _len; i = _i += 2) {
+          prop = callbackbindings[i];
+          scope = callbackbindings[i + 1];
+          if (typeof scope.unbind === "function") {
+            scope.unbind(prop, callback);
+          }
+        }
+        this.constraints[property] = null;
       };
 
       Node.prototype._bindConstraints = function() {
@@ -989,27 +1034,26 @@
         for (name in _ref) {
           constraint = _ref[name];
           bindings = constraint.bindings, expression = constraint.expression;
+          if (constraint.callbackbindings == null) {
+            constraint.callbackbindings = [];
+          }
           fn = this._valueLookup(expression);
-          constraint = this._constraintCallback(name, fn);
+          constraint.callback = this._constraintCallback(name, fn);
           for (bindexpression in bindings) {
             bindinglist = bindings[bindexpression];
             boundref = this._valueLookup(bindexpression)();
-            if (!boundref) {
-              showWarnings(["Could not bind constraint " + bindexpression]);
+            if (!boundref || (boundref.bind == null)) {
+              showWarnings(["Could not bind to " + bindexpression + " of constraint " + expression + " for " + this.$tagname + (this.id ? '#' + this.id : this.name ? '.' + name : '')]);
               continue;
-            }
-            if (boundref == null) {
-              boundref = boundref.$view;
             }
             for (_i = 0, _len = bindinglist.length; _i < _len; _i++) {
               binding = bindinglist[_i];
               property = binding.property;
-              if (typeof boundref.bind === "function") {
-                boundref.bind(property, constraint);
-              }
+              boundref.bind(property, constraint.callback);
+              constraint.callbackbindings.push(property, boundref);
             }
           }
-          this.setAttribute(name, fn());
+          this.setAttribute(name, fn(), false, false, true);
         }
       };
 
@@ -1060,7 +1104,7 @@
 
       Node.prototype._constraintCallback = function(name, fn) {
         return (function constraintCallback(){;
-        this.setAttribute(name, fn());
+        this.setAttribute(name, fn(), false, false, true);
         return }).bind(this);
       };
 
@@ -1171,8 +1215,13 @@
          * Fired when this node and all its children are about to be destroyed
          * @param {dr.node} node The dr.node that fired the event
          */
-        var subnode, _i, _len, _ref, _ref1;
+        var property, subnode, _i, _len, _ref, _ref1;
         this.sendEvent('destroy', this);
+        if (this.constraints) {
+          for (property in this.constraints) {
+            this._unbindConstraint(property);
+          }
+        }
         if (this.listeningTo) {
           this.stopListening();
         }
@@ -1195,12 +1244,6 @@
       return Node;
 
     })(Eventable);
-    stylemap = {
-      x: 'left',
-      y: 'top',
-      bgcolor: 'backgroundColor',
-      visible: 'display'
-    };
 
     /**
      * @class Sprite
@@ -1310,7 +1353,7 @@
       };
 
       Sprite.prototype.__updatePointerEvents = function() {
-        return this.setStyle('pointer-events', this.__clickable || this.__scrollable ? 'auto' : '', true);
+        return this.setStyle('pointer-events', this.__clickable || this.__scrollable ? 'auto' : 'none', true);
       };
 
       Sprite.prototype.destroy = function() {
@@ -1397,14 +1440,6 @@
         return this.input = input;
       };
 
-      Sprite.prototype.getInputtextHeight = function() {
-        var borderH, h, paddingH;
-        h = parseInt($(this.input).css('height'));
-        borderH = parseInt($(this.el).css('border-top-width')) + parseInt($(this.el).css('border-bottom-width'));
-        paddingH = parseInt($(this.el).css('padding-top')) + parseInt($(this.el).css('padding-bottom'));
-        return h + borderH + paddingH;
-      };
-
       Sprite.prototype.getAbsolute = function() {
         var pos;
         if (this.jqel == null) {
@@ -1453,6 +1488,20 @@
         return ss2(name, value, internal, el);
       };
     }
+    hiddenAttributes = {
+      text: true,
+      $tagname: true,
+      data: true,
+      replicator: true,
+      "class": true,
+      clip: true,
+      clickable: true,
+      scrollable: true,
+      $textcontent: true,
+      resize: true,
+      multiline: true,
+      ignorelayout: true
+    };
     ignoredAttributes = {
       parent: true,
       id: true,
@@ -1464,7 +1513,7 @@
 
     /**
      * @aside guide constraints
-     * @class dr.view
+     * @class dr.view {UI Components}
      * @extends dr.node
      * The visual base class for everything in dreem. Views extend dr.node to add the ability to set and animate visual attributes, and interact with the mouse.
      *
@@ -1687,7 +1736,7 @@
           clip: 'boolean',
           scrollable: 'boolean',
           visible: 'boolean',
-          'border': 'number',
+          border: 'number',
           padding: 'number'
         };
         defaults = {
@@ -1711,32 +1760,6 @@
         }
         attributes.$types = types;
         this._setDefaults(attributes, defaults);
-        if (this._isPercent(attributes['width'])) {
-          attributes['width'] = this._sizeConstraint(attributes['width'], "width");
-        }
-        if (this._isPercent(attributes['height'])) {
-          attributes['height'] = this._sizeConstraint(attributes['height'], "height");
-        }
-        if (attributes['parent'].padding) {
-          attributes['x'] += attributes['parent'].padding;
-          attributes['y'] += attributes['parent'].padding;
-        }
-        attributes['border-width'] = attributes['border'];
-        delete attributes['border'];
-        attributes['border-color'] = attributes['bordercolor'];
-        attributes['border-style'] = attributes['borderstyle'];
-        if ('padding-left' in attributes) {
-          attributes['padding-left'] = attributes['padding'];
-        }
-        if ('padding-right' in attributes) {
-          attributes['padding-right'] = attributes['padding'];
-        }
-        if ('padding-top' in attributes) {
-          attributes['padding-top'] = attributes['padding'];
-        }
-        if ('padding-bottom' in attributes) {
-          attributes['padding-bottom'] = attributes['padding'];
-        }
         if (el instanceof View) {
           el = el.sprite;
         }
@@ -1748,24 +1771,86 @@
         return typeof value === 'string' && value.indexOf('%') > -1;
       };
 
-      View.prototype.innerSize = function(percent, dim) {
-        return (this[dim] * parseInt(percent) / 100.0) - this['border-width'] * 2 - this.padding * 2;
-      };
-
-      View.prototype._sizeConstraint = function(percent, dim) {
-        return "${this.parent.innerSize ? this.parent.innerSize('" + percent + "', '" + dim + "') : $(this.parent)." + dim + "()}";
-      };
-
       View.prototype._createSprite = function(el, attributes) {
         return this.sprite = new Sprite(el, this, attributes.$tagname);
       };
 
-      View.prototype.setAttribute = function(name, value, skipstyle) {
+      View.prototype.setAttribute = function(name, value, skipstyle, skipConstraintSetup, skipconstraintunregistration) {
+        if (!skipConstraintSetup) {
+          switch (name) {
+            case 'width':
+            case 'x':
+              if (this.__setupPercentConstraint(name, value, 'innerwidth')) {
+                return;
+              }
+              break;
+            case 'height':
+            case 'y':
+              if (this.__setupPercentConstraint(name, value, 'innerheight')) {
+                return;
+              }
+          }
+        }
         value = this._coerceType(name, value);
+        switch (name) {
+          case 'width':
+          case 'height':
+          case 'border':
+          case 'padding':
+            value = Math.max(0, value);
+        }
         if (!(skipstyle || name in ignoredAttributes || name in hiddenAttributes || this[name] === value)) {
           this.sprite.setStyle(name, value);
         }
-        return View.__super__.setAttribute.call(this, name, value, true);
+        return View.__super__.setAttribute.call(this, name, value, true, skipConstraintSetup, skipconstraintunregistration);
+      };
+
+      View.prototype.__setupPercentConstraint = function(name, value, axis) {
+        var func, funcKey, oldFunc, parent, scale, self;
+        funcKey = '__percentFunc' + name;
+        oldFunc = this[funcKey];
+        parent = this.parent;
+        if (!(parent instanceof Node)) {
+          parent = dr.window;
+          axis = axis.substring(5);
+        }
+        if (oldFunc) {
+          this.stopListening(parent, axis, oldFunc);
+          delete this[funcKey];
+        }
+        if (this._isPercent(value)) {
+          self = this;
+          scale = parseInt(value) / 100;
+          func = this[funcKey] = function() {
+            return self.setAttribute(name, parent[axis] * scale, false, true);
+          };
+          this.listenTo(parent, axis, func);
+          func.call();
+          return true;
+        }
+      };
+
+      View.prototype.set_width = function(width) {
+        return this.setAttribute('innerwidth', width - 2 * (this.border + this.padding), true);
+      };
+
+      View.prototype.set_height = function(height) {
+        return this.setAttribute('innerheight', height - 2 * (this.border + this.padding), true);
+      };
+
+      View.prototype.set_border = function(border) {
+        return this.__updateInnerMeasures(2 * (border + this.padding));
+      };
+
+      View.prototype.set_padding = function(padding) {
+        return this.__updateInnerMeasures(2 * (this.border + padding));
+      };
+
+      View.prototype.__updateInnerMeasures = function(inset) {
+        this.innerwidth = this.width - inset;
+        this.innerheight = this.height - inset;
+        this.setAttribute('innerwidth', this.width - inset, true);
+        return this.setAttribute('innerheight', this.height - inset, true);
       };
 
       View.prototype.set_clickable = function(clickable) {
@@ -1929,12 +2014,12 @@
     })(Node);
 
     /**
-     * @class dr.inputtext
+     * @class dr.inputtext {UI Components, Input}
      * @extends dr.view
      * Provides an editable input text field.
      *
      *     @example
-     *     <simplelayout axis="y"></simplelayout>
+     *     <spacedlayout axis="y"></spacedlayout>
      *
      *     <text text="Enter your name"></text>
      *
@@ -1997,28 +2082,38 @@
         this._setDefaults(attributes, defaults);
         InputText.__super__.constructor.apply(this, arguments);
         if (!this.height) {
-          this.setAttribute('height', this.sprite.getInputtextHeight());
+          this.setAttribute('height', this._getDefaultHeight());
         }
         this.listenTo(this, 'change', this._handleChange);
-        this.listenTo(this, 'width', function(w) {
-          return this.sprite.setStyle('width', this.innerSize('100%', 'width'), true, this.sprite.input);
+        this.listenTo(this, 'innerwidth', function(iw) {
+          return this.sprite.setStyle('width', iw, true, this.sprite.input);
         });
-        this.listenTo(this, 'height', function(h) {
-          return this.sprite.setStyle('height', this.innerSize('100%', 'height'), true, this.sprite.input);
+        this.sprite.setStyle('width', this.innerwidth, true, this.sprite.input);
+        this.listenTo(this, 'innerheight', function(ih) {
+          return this.sprite.setStyle('height', ih, true, this.sprite.input);
+        });
+        this.sprite.setStyle('height', this.innerheight, true, this.sprite.input);
+        this.listenTo(this, 'click', function() {
+          return this.sprite.input.focus();
         });
       }
 
       InputText.prototype._createSprite = function(el, attributes) {
-        var b, h, multiline, p, w;
+        var multiline;
         InputText.__super__._createSprite.apply(this, arguments);
         attributes.text || (attributes.text = this.sprite.getText(true));
         this.sprite.setText('');
         multiline = this._coerceType('multiline', attributes.multiline, 'boolean');
-        p = attributes['padding'] || 0;
-        b = attributes['border-width'] || 0;
-        w = attributes.width - p * 2 - b * 2;
-        h = attributes.height - p * 2 - b * 2;
-        return this.sprite.createInputtextElement('', multiline, w, h);
+        return this.sprite.createInputtextElement('', multiline, attributes.width, attributes.height);
+      };
+
+      InputText.prototype._getDefaultHeight = function() {
+        var borderH, domElem, h, paddingH;
+        h = parseInt($(this.sprite.input).css('height'));
+        domElem = $(this.sprite.el);
+        borderH = parseInt(domElem.css('border-top-width')) + parseInt(domElem.css('border-bottom-width'));
+        paddingH = parseInt(domElem.css('padding-top')) + parseInt(domElem.css('padding-bottom'));
+        return h + borderH + paddingH;
       };
 
       InputText.prototype._handleChange = function() {
@@ -2054,7 +2149,7 @@
     })(View);
 
     /**
-     * @class dr.text
+     * @class dr.text {UI Components}
      * @extends dr.view
      * Text component that supports single and multi-line text.
      *
@@ -2235,20 +2330,6 @@
       pre.textContent = out;
       document.body.insertBefore(pre, document.body.firstChild);
       return console.error(out);
-    };
-    hiddenAttributes = {
-      text: true,
-      $tagname: true,
-      data: true,
-      replicator: true,
-      "class": true,
-      clip: true,
-      clickable: true,
-      scrollable: true,
-      $textcontent: true,
-      resize: true,
-      multiline: true,
-      ignorelayout: true
     };
     dom = (function() {
       var builtinTags, checkRequiredAttributes, exports, findAutoIncludes, flattenattributes, getChildren, htmlDecode, initAllElements, initElement, initFromElement, processSpecialTags, requiredAttributes, sendInit, specialtags, writeCSS;
@@ -2524,7 +2605,7 @@
             }
           }).always(finalcallback);
         };
-        return loadIncludes(validator);
+        return loadIncludes(test ? finalcallback : validator);
       };
       specialtags = ['handler', 'method', 'attribute', 'setter', 'include'];
       builtinTags = ['a', 'abbr', 'address', 'area', 'article', 'aside', 'audio', 'b', 'base', 'bdi', 'bdo', 'blockquote', 'body', 'br', 'button', 'canvas', 'caption', 'cite', 'code', 'col', 'colgroup', 'command', 'datalist', 'dd', 'del', 'details', 'dfn', 'div', 'dl', 'dt', 'em', 'embed', 'fieldset', 'figcaption', 'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header', 'hgroup', 'hr', 'html', 'i', 'iframe', 'img', 'image', 'input', 'ins', 'kbd', 'keygen', 'label', 'legend', 'li', 'link', 'map', 'mark', 'menu', 'meta', 'meter', 'nav', 'noscript', 'object', 'ol', 'optgroup', 'option', 'output', 'p', 'param', 'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'script', 'section', 'select', 'small', 'source', 'span', 'strong', 'style', 'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'textarea', 'tfoot', 'th', 'thead', 'time', 'title', 'tr', 'track', 'u', 'ul', 'var', 'video', 'wbr'];
@@ -2786,7 +2867,7 @@
       };
 
       /**
-         * @class dr.state
+         * @class dr.state {Core Dreem}
          * @extends dr.node
          * Allows a group of attributes, methods, handlers and instances to be removed and applied as a group.
          * 
@@ -2795,7 +2876,7 @@
          * Currently, states must end with the string 'state' in their name to work properly.
          *
          *     @example
-         *     <simplelayout axis="y"></simplelayout>
+         *     <spacedlayout axis="y"></spacedlayout>
          *     <view id="square" width="100" height="100" bgcolor="lightgrey">
          *       <attribute name="ispink" type="boolean" value="false"></attribute>
          *       <state name="pinkstate" applied="${this.parent.ispink}">
@@ -2938,7 +3019,7 @@
     })(Node);
 
     /**
-     * @class dr.class
+     * @class dr.class {Core Dreem}
      * Allows new tags to be created. Classes only be created with the &lt;class>&lt;/class> tag syntax. 
      * 
      * Classes can extend any other class, and they extend dr.view by default. 
@@ -2956,7 +3037,7 @@
      *
      *     <tile></tile>
      *
-     * Now we'll extend the tile class with a class called 'labeltile', which contains a label inside of the box. We'll declare one each of tile and labeltile, and position them with a simplelayout.
+     * Now we'll extend the tile class with a class called 'labeltile', which contains a label inside of the box. We'll declare one each of tile and labeltile, and position them with a spacedlayout.
      *
      *     @example
      *     <class name="tile" extends="view" bgcolor="thistle" width="100" height="100"></class>
@@ -2965,7 +3046,7 @@
      *       <text text="Tile"></text>
      *     </class>
      *
-     *     <simplelayout axis="x"></simplelayout>
+     *     <spacedlayout></spacedlayout>
      *     <tile></tile>
      *     <labeltile></labeltile>
      *
@@ -2979,7 +3060,7 @@
      *       <text text="${this.parent.label}"></text>
      *     </class>
      *
-     *     <simplelayout axis="x"></simplelayout>
+     *     <spacedlayout></spacedlayout>
      *     <tile></tile>
      *     <labeltile label="The Tile"></labeltile>
      *
@@ -3142,20 +3223,20 @@
     })();
 
     /**
-     * @class dr.layout
+     * @class dr.layout {Layout}
      * @extends dr.node
      * The base class for all layouts. 
      *
      * When a new layout is added, it will automatically create and add itself to a layouts array in its parent. In addition, an onlayouts event is fired in the parent when the layouts array changes. This allows the parent to access the layout(s) later.
      *
-     * Here is a view that contains both a simplelayout and a boundslayout.
+     * Here is a view that contains both a spacedlayout and a shrinktofit.
      *
      *     @example
-     *     <simplelayout axis="y"></simplelayout>
+     *     <spacedlayout axis="y"></spacedlayout>
      *     <view bgcolor="oldlace">
-     *       <boundslayout></boundslayout>
+     *       <shrinktofit axis="both"></shrinktofit>
      *
-     *       <simplelayout axis="x"></simplelayout>
+     *       <spacedlayout></spacedlayout>
      *
      *       <view width="50" height="50" bgcolor="lightpink" opacity=".3"></view>
      *       <view width="50" height="50" bgcolor="plum" opacity=".3"></view>
@@ -3168,45 +3249,6 @@
      *
      *     <text id="output" multiline="true" width="300"></text>
      *
-     * Here we create diagonlayout, a subclass of layout that lays out the subviews in a diagonal formation. The update method sets the positions of the subview, and the onsubview handler attaches event listeners to the subviews as they are added so update is called if their dimensions or visibility are updated.
-     *
-     *     @example
-     *     <class name="diagonlayout" extends="layout">
-     *       <handler event="onsubview" args="subview">
-     *         this.listenTo(subview, 'visible', this.update);
-     *         this.listenTo(subview, 'width', this.update);
-     *         this.listenTo(subview, 'height', this.update);
-     *       </handler>
-     *       <method name="update" args="value, sender">
-     *         var posX = 0;
-     *         var posY = 0;
-     *         for (var i=0, l = this.parent.subviews.length; i < l; i++) {
-     *           var subview = this.parent.subviews[i];
-     *           if (subview.ignorelayout || !subview.visible) {
-     *             continue;
-     *           }
-     *
-     *           subview.setAttribute('x', posX);
-     *           subview.setAttribute('y', posY);
-     *
-     *           posX += subview.width;
-     *           posY += subview.height;
-     *         }
-     *       </method>
-     *     </class>
-     *
-     *     <diagonlayout></diagonlayout>
-     *     <view id="v1" width="50" height="50" bgcolor="Aqua"></view>
-     *     <view id="v2" width="50" height="50" bgcolor="HotPink"></view>
-     *     <view id="v3" width="50" height="50" bgcolor="MediumPurple"></view>
-     *
-     *     <labelbutton text="click me">
-     *       <handler event="onclick">
-     *         v1.setAttribute('width', 100);
-     *         v2.setAttribute('height', 150);
-     *       </handler>
-     *     </labelbutton>
-     *
      *
      */
     Layout = (function(_super) {
@@ -3217,113 +3259,9 @@
         if (attributes == null) {
           attributes = {};
         }
-        this._added = __bind(this._added, this);
-        this.locked = true;
-        Layout.__super__.constructor.apply(this, arguments);
-        this.listenTo(this.parent, 'subviews', this._added);
-        this.listenTo(this.parent, 'init', this.update);
-        if ((_base = this.parent).layouts == null) {
-          _base.layouts = [];
-        }
-        this.parent.layouts.push(this);
-        this.parent.sendEvent('layouts', this.parent.layouts);
-        subviews = this.parent.subviews;
-        if (subviews) {
-          for (_i = 0, _len = subviews.length; _i < _len; _i++) {
-            subview = subviews[_i];
-            this._added(subview);
-          }
-        }
-        this.locked = false;
-        this.update();
-      }
-
-      Layout.prototype._added = function(child) {
-        if (child) {
-
-          /**
-           * @event onsubview 
-           * Fired when the layout has a new subview. Used to listen for events on the view that the layout cares about.
-           * @param {dr.view} child The subview that was added
-           */
-          if (!child.ignorelayout) {
-            this.sendEvent('subview', child);
-          }
-        }
-        return this.update(null, child);
-      };
-
-
-      /**
-       * @method update
-       * @abstract
-       * Called when the layout should be updated. Must be implemented to update the position of the subviews
-       * @param value The value received from the node that updated
-       * @param {dr.node} sender The node that updated
-       */
-
-
-      /**
-       * Determines if a layout should be updated or not, usually called from update
-       * @returns {Boolean} If true, skip updating the layout
-       */
-
-      Layout.prototype.skip = function() {
-        var _ref;
-        if (this.locked || (!this.inited) || (!((_ref = this.parent) != null ? _ref.subviews : void 0)) || (this.parent.subviews.length === 0)) {
-          return true;
-        }
-      };
-
-      Layout.prototype.destroy = function(skipevents) {
-        this.locked = true;
-        Layout.__super__.destroy.apply(this, arguments);
-        if (!skipevents) {
-          return this._removeFromParent('layouts');
-        }
-      };
-
-      Layout.prototype.set_locked = function(locked) {
-        var changed;
-        changed = this.locked !== locked;
-
-        /**
-         * @property {Boolean} locked
-         * If true, this layout will not update
-         */
-        this.locked = locked;
-
-        /**
-         * @event onlocked 
-         * Fired when the layout is locked
-         * @param {Boolean} locked If true, the layout is locked
-         */
-        this.sendEvent('locked', locked);
-        if (changed && !locked) {
-          return this.update();
-        }
-      };
-
-      return Layout;
-
-    })(Node);
-
-    /**
-     * @class dr.layoot
-     * @extends dr.node
-     * The base class for all layouts.
-     */
-    Layoot = (function(_super) {
-      __extends(Layoot, _super);
-
-      function Layoot(el, attributes) {
-        var subview, subviews, _base, _i, _len;
-        if (attributes == null) {
-          attributes = {};
-        }
         this.locked = true;
         this.subviews = [];
-        Layoot.__super__.constructor.apply(this, arguments);
+        Layout.__super__.constructor.apply(this, arguments);
         this.listenTo(this.parent, 'subviewAdded', this.addSubview.bind(this));
         this.listenTo(this.parent, 'subviewRemoved', this.removeSubview.bind(this));
         this.listenTo(this.parent, 'init', this.update);
@@ -3342,9 +3280,9 @@
         this.update();
       }
 
-      Layoot.prototype.destroy = function(skipevents) {
+      Layout.prototype.destroy = function(skipevents) {
         this.locked = true;
-        Layoot.__super__.destroy.apply(this, arguments);
+        Layout.__super__.destroy.apply(this, arguments);
         if (!skipevents) {
           return this._removeFromParent('layouts');
         }
@@ -3357,7 +3295,7 @@
        * @return {void}
        */
 
-      Layoot.prototype.addSubview = function(view) {
+      Layout.prototype.addSubview = function(view) {
         if (this.ignore(view)) {
           return;
         }
@@ -3375,7 +3313,7 @@
        * @return {number} the index of the removed subview or -1 if not removed.
        */
 
-      Layoot.prototype.removeSubview = function(view) {
+      Layout.prototype.removeSubview = function(view) {
         var idx;
         if (this.ignore(view)) {
           return -1;
@@ -3399,7 +3337,7 @@
        * @return {boolean} True means the subview will be skipped, false otherwise.
        */
 
-      Layoot.prototype.ignore = function(view) {
+      Layout.prototype.ignore = function(view) {
         return view.ignorelayout;
       };
 
@@ -3411,7 +3349,7 @@
        * @return {void}
        */
 
-      Layoot.prototype.startMonitoringSubview = function(view) {};
+      Layout.prototype.startMonitoringSubview = function(view) {};
 
 
       /**
@@ -3421,7 +3359,7 @@
        * @return {void}
        */
 
-      Layoot.prototype.startMonitoringAllSubviews = function() {
+      Layout.prototype.startMonitoringAllSubviews = function() {
         var i, svs, _results;
         svs = this.subviews;
         i = svs.length;
@@ -3441,7 +3379,7 @@
        * @return {void}
        */
 
-      Layoot.prototype.stopMonitoringSubview = function(view) {};
+      Layout.prototype.stopMonitoringSubview = function(view) {};
 
 
       /**
@@ -3451,7 +3389,7 @@
        * @return {void}
        */
 
-      Layoot.prototype.stopMonitoringAllSubviews = function() {
+      Layout.prototype.stopMonitoringAllSubviews = function() {
         var i, svs, _results;
         svs = this.subviews;
         i = svs.length;
@@ -3469,7 +3407,7 @@
        * @return {boolean} true if not locked, false otherwise.
        */
 
-      Layoot.prototype.canUpdate = function() {
+      Layout.prototype.canUpdate = function() {
         return !this.locked && this.parent.inited;
       };
 
@@ -3480,9 +3418,9 @@
        * @return {void}
        */
 
-      Layoot.prototype.update = function() {};
+      Layout.prototype.update = function() {};
 
-      return Layoot;
+      return Layout;
 
     })(Node);
     idle = (function() {
@@ -3554,7 +3492,7 @@
     })(Eventable);
 
     /**
-     * @class dr.idle
+     * @class dr.idle {Util}
      * @extends Eventable
      * Sends onidle events when the application is active and idle.
      *
@@ -3563,7 +3501,7 @@
      *       milis.setAttribute('text', idleStatus);
      *     </handler>
      *
-     *     <simplelayout axis="x"></simplelayout>
+     *     <spacedlayout></spacedlayout>
      *     <text text="Miliseconds since app started: "></text>
      *     <text id="milis"></text>
      */
@@ -3608,20 +3546,9 @@
 
     })(StartEventable);
     mouseEvents = ['click', 'mouseover', 'mouseout', 'mousedown', 'mouseup'];
-    skipEvent = function(e) {
-      if (e.stopPropagation) {
-        e.stopPropagation();
-      }
-      if (e.preventDefault) {
-        e.preventDefault();
-      }
-      e.cancelBubble = true;
-      e.returnValue = false;
-      return false;
-    };
 
     /**
-     * @class dr.mouse
+     * @class dr.mouse {Input}
      * @extends Eventable
      * Sends mouse events. Often used to listen to onmouseover/x/y events to follow the mouse position.
      *
@@ -3641,7 +3568,7 @@
      *
      */
     Mouse = (function(_super) {
-      var lastTouchDown, lastTouchOver;
+      var lastTouchDown, lastTouchOver, skipEvent;
 
       __extends(Mouse, _super);
 
@@ -3697,6 +3624,18 @@
         }
       }
 
+      skipEvent = function(e) {
+        if (e.stopPropagation) {
+          e.stopPropagation();
+        }
+        if (e.preventDefault) {
+          e.preventDefault();
+        }
+        e.cancelBubble = true;
+        e.returnValue = false;
+        return false;
+      };
+
       Mouse.prototype.startEventTest = function() {
         var _ref, _ref1, _ref2;
         return ((_ref = this.events['mousemove']) != null ? _ref.length : void 0) || ((_ref1 = this.events['x']) != null ? _ref1.length : void 0) || ((_ref2 = this.events['y']) != null ? _ref2.length : void 0);
@@ -3707,8 +3646,10 @@
         simulatedEvent = document.createEvent('MouseEvent');
         simulatedEvent.initMouseEvent(type, true, true, window, 1, first.pageX, first.pageY, first.clientX, first.clientY, false, false, false, false, 0, null);
         first.target.dispatchEvent(simulatedEvent);
-        if (first.target.$view && first.target.$view.$tagname !== 'inputtext') {
-          return event.preventDefault();
+        if (first.target.$view) {
+          if (!(first.target.$view instanceof InputText)) {
+            return skipEvent(event);
+          }
         }
       };
 
@@ -3757,7 +3698,9 @@
         if (view) {
           if (type === 'mousedown') {
             this._lastMouseDown = view;
-            skipEvent(event);
+            if (!(view instanceof InputText)) {
+              skipEvent(event);
+            }
           }
         }
         if (type === 'mouseup' && this._lastMouseDown && this._lastMouseDown !== view) {
@@ -3834,7 +3777,7 @@
     })(StartEventable);
 
     /**
-     * @class dr.window
+     * @class dr.window {Util}
      * @extends Eventable
      * Sends window resize events. Often used to dynamically reposition views as the window size changes.
      *
@@ -3914,14 +3857,14 @@
     })(StartEventable);
 
     /**
-     * @class dr.keyboard
+     * @class dr.keyboard {Input}
      * @extends Eventable
      * Sends keyboard events.
      *
      * You might want to track specific keyboard events when text is being entered into an input box. In this example we listen for the enter key and display the value.
      *
      *     @example
-     *     <simplelayout axis="y" spacing="25"></simplelayout>
+     *     <spacedlayout axis="y" spacing="25"></spacedlayout>
      *     <inputtext id="nameinput" bgcolor="lightgrey"></inputtext>
      *     <text id="keycode" text="Key Code:"></text>
      *     <text id="entered"></text>
@@ -4017,7 +3960,7 @@
     })(Eventable);
 
     /**
-     * @class dr
+     * @class dr {Core Dreem}
      * Holds builtin and user-created classes and public APIs.
      * 
      * All classes listed here can be invoked with the declarative syntax, e.g. &lt;node>&lt;/node> or &lt;view>&lt;/view>
@@ -4032,7 +3975,6 @@
       keyboard: new Keyboard(),
       window: new Window(),
       layout: Layout,
-      layoot: Layoot,
       idle: new Idle(),
       state: State,
 
@@ -4050,7 +3992,7 @@
     };
 
     /**
-     * @class dr.method
+     * @class dr.method {Core Dreem}
      * Declares a member function in a node, view, class or other class instance. Methods can only be created with the &lt;method>&lt;/method> tag syntax.
      * 
      * If a method overrides an existing method, any existing (super) method(s) will be called first automatically.
@@ -4101,7 +4043,7 @@
      *       </method>
      *     </class>
      *
-     *     <simplelayout axis="x"></simplelayout>
+     *     <spacedlayout></spacedlayout>
      *
      *     <square id="square1"></square>
      *     <bluesquare id="square2"></bluesquare>
@@ -4154,7 +4096,7 @@
      */
 
     /**
-     * @class dr.handler
+     * @class dr.handler {Core Dreem}
      * Declares a handler in a node, view, class or other class instance. Handlers can only be created with the `<handler></handler>` tag syntax.
      *
      * Handlers are called when an event fires with new value, if available.
@@ -4230,7 +4172,7 @@
      */
 
     /**
-     * @class dr.attribute
+     * @class dr.attribute {Core Dreem}
      * Adds a variable to a node, view, class or other class instance. Attributes can only be created with the &lt;attribute>&lt;/attribute> tag syntax.
      * 
      * Attributes allow classes to declare new variables with a specific type and default value. 
@@ -4260,7 +4202,7 @@
      *       </handler>
      *     </class>
      * 
-     *     <simplelayout></simplelayout>
+     *     <spacedlayout></spacedlayout>
      *     <person></person>
      *     <person mood="sad"></person>
      *
@@ -4279,7 +4221,7 @@
      *       <attribute name="size" type="number" value="20"></attribute>
      *     </class>
      * 
-     *     <simplelayout></simplelayout>
+     *     <spacedlayout></spacedlayout>
      *     <person></person>
      *     <person mood="sad" size="50"></person>
      */

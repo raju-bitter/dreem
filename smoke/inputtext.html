@@ -1,4 +1,9 @@
 <html>
+<expectedoutput>
+  <!--
+  refusing to create a class that would overwrite the builtin tag textarea
+  -->
+</expectedoutput>
 <head>
   <title>rhes.es</title>
   <style type="text/css">
@@ -16,14 +21,17 @@
   <script type="text/javascript" src="/lib/jquery-1.9.1.min.js"></script>
   <script type="text/javascript" src="/lib/acorn.js"></script>
   <script type="text/javascript" src="/lib/coffee-script.js"></script>
-  <script type="text/javascript" src="/lib/assert.js"></script>
   <script type="text/javascript" src="/layout.js"></script>
+  <script type="text/javascript" src="/lib/chai.js"></script>
+  <script>
+    var assert = chai.assert
+  </script>
 </head>
 <body>
 
 <!-- InputText smoke tests. See spec/features/inputtext_spec.rb for interactive tests -->
 <view width="100%">
-  <simplelayout axis="y"></simplelayout>
+  <spacedlayout axis="y" spacing="15"></spacedlayout>
 
   <!-- Setting text with static attribute -->
   <inputtext>
@@ -46,7 +54,7 @@
 
   <!-- Setting text with a constraint -->
   <view>
-    <boundslayout></boundslayout>
+    <shrinktofit axis="both"></shrinktofit>
     <attribute name="text" type="string" value="some text"></attribute>
 
     <inputtext bgcolor="lightgreen" text="${this.parent.text}">
@@ -58,7 +66,7 @@
   </view>
 
   <view>
-    <boundslayout></boundslayout>
+    <shrinktofit axis="both"></shrinktofit>
     <inputtext bgcolor="lightyellow" text="${this.parent.text}">
       <handler event="oninit">
         assert.equal($(this.sprite.input)[0].value, '')

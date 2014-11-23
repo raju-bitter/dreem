@@ -18,18 +18,15 @@ for(var i = 0; i < list.length; i++){
   }       
 }
 
-var expected = fs.read('./bin/expected.txt')
-var out = []
-
-var page = require('webpage').create();
-
 var runTest = function (file, callback) {
+  var out = []
   var tId;
   var updateTimer = function(ms) {
     ms = ms || timeout
     if (tId) clearTimeout(tId) 
     tId = setTimeout(callback, ms);
   }
+  var page = require('webpage').create();
   page.onError = function(msg, trace) {
     var msgStack = ['ERROR: ' + msg];
     if (trace && trace.length) {
@@ -57,29 +54,41 @@ var runTest = function (file, callback) {
   page.onConsoleMessage = function(msg, lineNum, sourceId) {
     if (msg === '~~DONE~~') {
       updateTimer(timeout);
+      var expectedarry = page.evaluateJavaScript(function () {
+        var retarry = [];
+        $('expectedoutput').contents().filter(function(){
+          return this.nodeType == 8;
+        }).each(function(i, e){
+            retarry.push($.trim(e.nodeValue))
+        });
+        
+        return retarry;
+      });
+      
+      gotoutput = out.join("\n")
+      expectedoutput = expectedarry.join("\n")
+      if (gotoutput !== expectedoutput) {
+        console.log('ERROR: unexpected output expected::::');
+        console.log(expectedoutput)
+        console.log('but got::::::::::::::::::::::::::::::');
+        console.log(gotoutput)
+        console.log("\n")
+      }
       return;
     }
     out.push(msg)
-    console.log(msg)
+//    console.log(msg)
   };
-  page.open('http://127.0.0.1:8080' + path + file);
+  page.open('http://127.0.0.1:8080' + path + file + '?test');
 }
 
 var loadNext = function() {
   var file = files.pop();
   if (file) {
-    // console.log('')
-    console.log('loading file: ' + file)
+    console.log("RUNNING TEST: ", file)
     runTest(file, loadNext);
   } else {
-    var output = out.join('\n')
-    if (expected !== output) {
-      console.log('ERROR: unexpected output, expected:');
-      console.log(expected)
-      phantom.exit(1);
-    } else {
-      phantom.exit();
-    }
+    phantom.exit();
   }
 }
 
