@@ -525,7 +525,7 @@
         * The name of the dataset
         */
 /**
-        * @property {Object} data
+        * @attribute {Object} data
         * The data inside the dataset
         */
 /**

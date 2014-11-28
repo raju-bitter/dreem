@@ -731,7 +731,7 @@
         }
 
         /**
-         * @property {dr.node[]} subnodes
+         * @attribute {dr.node[]} subnodes
          * @readonly
          * An array of this node's child nodes
          */
@@ -744,7 +744,7 @@
         delete attributes.$deferbindings;
 
         /*
-         * @property {String} $textcontent
+         * @attribute {String} $textcontent
          * @readonly
          * Contains the textual contents of this node, if any
          */
@@ -823,7 +823,7 @@
          */
 
         /**
-         * @property {Boolean} inited
+         * @attribute {Boolean} inited
          * @readonly
          * True when this node and all its children are completely initialized
          */
@@ -1756,7 +1756,7 @@
         }
 
         /**
-         * @property {dr.view[]} subviews
+         * @attribute {dr.view[]} subviews
          * @readonly
          * An array of this views's child views
          */
@@ -1768,7 +1768,7 @@
          */
 
         /**
-         * @property {dr.layout[]} layouts
+         * @attribute {dr.layout[]} layouts
          * @readonly
          * An array of this views's layouts. Only defined when needed.
          */
@@ -1780,7 +1780,7 @@
          */
 
         /**
-         * @property {Boolean} ignorelayout
+         * @attribute {Boolean} ignorelayout
          * If true, layouts should ignore this view
          */
         this.subviews = [];
@@ -3925,14 +3925,14 @@
         }
 
         /**
-         * @property {Number} x
+         * @attribute {Number} x
          * @readonly
          * The x coordinate of the mouse
          */
         this.x = event.pageX;
 
         /**
-         * @property {Number} y
+         * @attribute {Number} y
          * @readonly
          * The y coordinate of the mouse
          */

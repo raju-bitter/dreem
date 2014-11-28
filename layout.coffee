@@ -537,7 +537,7 @@ window.dr = do ->
     constructor: (el, attributes = {}) ->
 
       ###*
-      # @property {dr.node[]} subnodes
+      # @attribute {dr.node[]} subnodes
       # @readonly
       # An array of this node's child nodes
       ###
@@ -551,7 +551,7 @@ window.dr = do ->
       delete attributes.$deferbindings
 
       ###
-      # @property {String} $textcontent
+      # @attribute {String} $textcontent
       # @readonly
       # Contains the textual contents of this node, if any
       ###
@@ -621,7 +621,7 @@ window.dr = do ->
       # @param {dr.node} node The dr.node that fired the event
       ###
       ###*
-      # @property {Boolean} inited
+      # @attribute {Boolean} inited
       # @readonly
       # True when this node and all its children are completely initialized
       ###
@@ -1394,7 +1394,7 @@ window.dr = do ->
     ###
     constructor: (el, attributes = {}) ->
       ###*
-      # @property {dr.view[]} subviews
+      # @attribute {dr.view[]} subviews
       # @readonly
       # An array of this views's child views
       ###
@@ -1404,7 +1404,7 @@ window.dr = do ->
       # @param {dr.view} view The dr.view that fired the event
       ###
       ###*
-      # @property {dr.layout[]} layouts
+      # @attribute {dr.layout[]} layouts
       # @readonly
       # An array of this views's layouts. Only defined when needed.
       ###
@@ -1414,7 +1414,7 @@ window.dr = do ->
       # @param {dr.layout} view The dr.layout that fired the event
       ###
       ###*
-      # @property {Boolean} ignorelayout
+      # @attribute {Boolean} ignorelayout
       # If true, layouts should ignore this view
       ###
 
@@ -3151,13 +3151,13 @@ window.dr = do ->
         view.sendEvent(type, view)
 
       ###*
-      # @property {Number} x
+      # @attribute {Number} x
       # @readonly
       # The x coordinate of the mouse
       ###
       @x = event.pageX
       ###*
-      # @property {Number} y
+      # @attribute {Number} y
       # @readonly
       # The y coordinate of the mouse
       ###

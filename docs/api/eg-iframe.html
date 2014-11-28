@@ -27,10 +27,11 @@
     <script type="text/javascript">
         function loadInlineExample(code, options, callback) {
             // Surround the example with a top-level view
+            smallWrapper = options.small || false;
             tallWrapper = options.tall || false;
             wideWrapper = options.wide || false;
 
-            wrapperHeight = tallWrapper ? 600 : 150;
+            wrapperHeight = tallWrapper ? 600 : (smallWrapper ? 100 : 150);
             wrapperWidth = wideWrapper ? 600 : 450;
 
             prefix = '&lt;view id="all" width="' + wrapperWidth + '" height="' + wrapperHeight + '" clip="true">';

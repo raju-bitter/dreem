@@ -747,8 +747,8 @@
           attributes = {};
         }
 
-<span id='dr-node-property-subnodes'>        /**
-</span>         * @property {dr.node[]} subnodes
+<span id='dr-node-attribute-subnodes'>        /**
+</span>         * @attribute {dr.node[]} subnodes
          * @readonly
          * An array of this node&#39;s child nodes
          */
@@ -761,7 +761,7 @@
         delete attributes.$deferbindings;
 
         /*
-         * @property {String} $textcontent
+         * @attribute {String} $textcontent
          * @readonly
          * Contains the textual contents of this node, if any
          */
@@ -839,8 +839,8 @@
          * @param {dr.node} node The dr.node that fired the event
          */
 
-<span id='dr-node-property-inited'>        /**
-</span>         * @property {Boolean} inited
+<span id='dr-node-attribute-inited'>        /**
+</span>         * @attribute {Boolean} inited
          * @readonly
          * True when this node and all its children are completely initialized
          */
@@ -1772,8 +1772,8 @@
           attributes = {};
         }
 
-<span id='dr-view-property-subviews'>        /**
-</span>         * @property {dr.view[]} subviews
+<span id='dr-view-attribute-subviews'>        /**
+</span>         * @attribute {dr.view[]} subviews
          * @readonly
          * An array of this views&#39;s child views
          */
@@ -1784,8 +1784,8 @@
          * @param {dr.view} view The dr.view that fired the event
          */
 
-<span id='dr-view-property-layouts'>        /**
-</span>         * @property {dr.layout[]} layouts
+<span id='dr-view-attribute-layouts'>        /**
+</span>         * @attribute {dr.layout[]} layouts
          * @readonly
          * An array of this views&#39;s layouts. Only defined when needed.
          */
@@ -1796,8 +1796,8 @@
          * @param {dr.layout} view The dr.layout that fired the event
          */
 
-<span id='dr-view-property-ignorelayout'>        /**
-</span>         * @property {Boolean} ignorelayout
+<span id='dr-view-attribute-ignorelayout'>        /**
+</span>         * @attribute {Boolean} ignorelayout
          * If true, layouts should ignore this view
          */
         this.subviews = [];
@@ -3941,15 +3941,15 @@
           view.sendEvent(type, view);
         }
 
-<span id='dr-mouse-property-x'>        /**
-</span>         * @property {Number} x
+<span id='dr-mouse-attribute-x'>        /**
+</span>         * @attribute {Number} x
          * @readonly
          * The x coordinate of the mouse
          */
         this.x = event.pageX;
 
-<span id='dr-mouse-property-y'>        /**
-</span>         * @property {Number} y
+<span id='dr-mouse-attribute-y'>        /**
+</span>         * @attribute {Number} y
          * @readonly
          * The y coordinate of the mouse
          */
