@@ -140,7 +140,7 @@ SOFTWARE. -->
       <handler event="onbgcolor" args="color">
       </handler>
 
-      <method name="handleChange">
+      <method name="handleChange" invokesuper="before">
         this.setAttribute('text', this.editor.getValue());
         //console.log("handleChange", this.text);
         if (this.pausedelay > 0) {
@@ -161,7 +161,7 @@ SOFTWARE. -->
         }
       </handler>
 
-      <method name="handleResize">
+      <method name="handleResize" invokesuper="before">
         if (this.editor) {
           this.acediv.style.width = this.width;
           this.acediv.style.height = this.height;

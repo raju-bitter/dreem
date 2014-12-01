@@ -161,7 +161,7 @@ SOFTWARE. -->
         this.startOffset = 0;
         this.startTime = 0;
       </handler>
-      <method name="play">
+      <method name="play" invokesuper="before">
         if (! this.buffer) return;
 
         // track the time when playback started
@@ -189,7 +189,7 @@ SOFTWARE. -->
           this.source.start = source.noteOn;
         this.source.start(0, this.startOffset % this.duration);                           
       </method>
-      <method name="stop">
+      <method name="stop" invokesuper="before">
         if (! this.source) return;
         if (!this.source.stop)
           this.source.stop = source.noteOff;
@@ -198,7 +198,7 @@ SOFTWARE. -->
         this.startTime = this.startOffset = 0;
         this.paused = false;
       </method>
-      <method name="pause">
+      <method name="pause" invokesuper="before">
         if (! this.source) return;
         if (!this.source.stop)
           this.source.stop = source.noteOff;

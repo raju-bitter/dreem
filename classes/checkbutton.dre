@@ -75,7 +75,7 @@ SOFTWARE. -->
         setTimeout(func, 0)
       </handler>
 
-      <method name="realinit">
+      <method name="realinit" invokesuper="before">
         @realinited = true
         # return unless @check   # oninit can fire before children are inited
 
@@ -90,7 +90,7 @@ SOFTWARE. -->
         @visualize()
       </method>
 
-      <method name="handleResize">
+      <method name="handleResize" invokesuper="before">
         return unless @realinited  #Hack. Should be @inited
         return if @_resize_lock
 

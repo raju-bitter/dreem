@@ -65,7 +65,7 @@ SOFTWARE. -->
         * @param {String} type The type of event to be sent.
         * @param {Object} data The data to be sent.
         */-->
-      <method name="send" args="type, data">
+      <method name="send" args="type, data" invokesuper="before">
         if (this.connected) {
           var json = {'type': type || 'data', data: data};
           // console.log('sending', json)

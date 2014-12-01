@@ -132,7 +132,7 @@ SOFTWARE. -->
       * between minvalue and maxvalue or maxlowvalue (whichever is lower) and then calls setAttribute.
       * @param {Number} v The new value of the component.
       */-->
-    <method name="changeLowValue" args="v">
+    <method name="changeLowValue" args="v" invokesuper="before">
         max = Math.min(@maxvalue, @maxlowvalue)
         if (v > max)
           v = max;
@@ -147,7 +147,7 @@ SOFTWARE. -->
       * between minvalue or minhighvalue (whichever is higher) and maxvalue and then calls setAttribute.
       * @param {Number} v The new value of the component.
       */-->
-    <method name="changeHighValue" args="v">
+    <method name="changeHighValue" args="v" invokesuper="before">
         min = Math.max(@minvalue, @minhighvalue)
         if (v < min)
           v = min;
@@ -177,7 +177,7 @@ SOFTWARE. -->
     <view name="lowvalueview" bgcolor="${this.parent.lowselectcolor}"></view>
 
     <!-- visualize: Show the current value -->
-    <method name="visualize">
+    <method name="visualize" invokesuper="before">
 
         if @axis == 'x'
 
@@ -244,7 +244,7 @@ SOFTWARE. -->
     </handler>
 
     <!-- Move the slider in response to a change in position -->
-    <method name="movePosition" args="p">
+    <method name="movePosition" args="p" invokesuper="before">
         spread = @maxvalue - @minvalue;
 
         if (@axis == 'x')

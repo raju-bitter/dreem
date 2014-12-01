@@ -47,7 +47,7 @@ SOFTWARE. -->
         setTimeout(func, 0)
       </handler>
 
-      <method name="realinit">
+      <method name="realinit" invokesuper="before">
         # visual is the object that makes a visual change when selected
         @visual = @
 
@@ -61,7 +61,7 @@ SOFTWARE. -->
         @visualize()
       </method>
 
-      <method name="handleResize">
+      <method name="handleResize" invokesuper="before">
         return unless @realinited  #Hack. Should be @inited
         return if @_resize_lock
 

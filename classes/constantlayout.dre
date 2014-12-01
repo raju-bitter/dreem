@@ -47,7 +47,7 @@ SOFTWARE. -->
   <attribute name="value" type="expression" value="0"></attribute>
   <handler event="onvalue" method="update"></handler>
   
-  <method name="update">
+  <method name="update" invokesuper="before">
     if @canUpdate()
       attribute = @attribute
       value = @value

@@ -958,7 +958,14 @@
               supr.apply(scope, arguments);
               return retval;
             };
-          } else if (invokeSuper === 'inside') {
+          } else if (invokeSuper === 'before') {
+            return scope[methodname] = function() {
+              var retval;
+              supr.apply(scope, arguments);
+              retval = method.apply(scope, arguments);
+              return retval;
+            };
+          } else {
             return scope[methodname] = function() {
               var prevOwn, prevValue, retval;
               prevValue = scope['super'];
@@ -972,13 +979,6 @@
               } else {
                 delete scope['super'];
               }
-              return retval;
-            };
-          } else {
-            return scope[methodname] = function() {
-              var retval;
-              supr.apply(scope, arguments);
-              retval = method.apply(scope, arguments);
               return retval;
             };
           }

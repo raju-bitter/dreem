@@ -103,16 +103,16 @@
          Tests that a method on an instance overrides the same method in 
          the class definition. -->
     <item>
-      <method name="doInit">
+      <method name="doInit" invokesuper="before">
         var testArr = this.getTestArray();
         testArr.push('inst.start');
         testArr.push('inst.end');
-        
+
         var matchArr = [
           // setters first
           'item.selected_setter.start',
           'item.selected_setter.end',
-          
+
           // oninit handler
           'item.start',
           'item.end',
@@ -123,12 +123,12 @@
         ];
         assert.equal(matchArr.join(','), testArr.join(','));
       </method>
-      <method name="doClick">
+      <method name="doClick" invokesuper="before">
         // console.log('instance start');
         // console.log('instance end');
       </method>
     </item>
-    
+
     <!-- Tests that an override of a method called from within another
          overridden method is executed in the correct order.
          
@@ -241,7 +241,7 @@
          Tests that invokesuper:inside on a setter on a subclass override is
          executed in the correct order. -->
     <subitem>
-      <method name="doInit">
+      <method name="doInit" invokesuper="before">
         var testArr = this.getTestArray();
         testArr.push('inst.start');
         testArr.push('inst.end');
@@ -354,7 +354,7 @@
     <!-- Tests that invokesuper on a method with multiple levels of 
          subclassing works. -->
     <subsubitem>
-      <method name="doInit">
+      <method name="doInit" invokesuper="before">
         var testArr = this.getTestArray();
         testArr.push('inst.start');
         testArr.push('inst.end');
@@ -395,7 +395,7 @@
         testArr.push('inst.selected_setter.end');
         return selected;
       </setter>
-      <method name="doInit">
+      <method name="doInit" invokesuper="before">
         var testArr = this.getTestArray();
         testArr.push('inst.start');
         testArr.push('inst.end');

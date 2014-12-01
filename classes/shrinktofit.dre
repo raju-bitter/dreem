@@ -80,11 +80,11 @@ SOFTWARE. -->
   <attribute name="ypad" type="number" value="0"></attribute>
   <handler event="onypad" method="update"></handler>
   
-  <method name="startMonitoringSubview" args="view">
+  <method name="startMonitoringSubview" args="view" invokesuper="before">
     @__updateMonitoringSubview(view, @listenTo)
   </method>
   
-  <method name="stopMonitoringSubview" args="view">
+  <method name="stopMonitoringSubview" args="view" invokesuper="before">
     @__updateMonitoringSubview(view, @stopListening)
   </method>
   
@@ -96,7 +96,7 @@ SOFTWARE. -->
     * @return {void}
     * @private
     */-->
-  <method name="__updateMonitoringSubview" args="view, func">
+  <method name="__updateMonitoringSubview" args="view, func" invokesuper="before">
     axis = @axis
     func = func.bind(@)
     
@@ -111,7 +111,7 @@ SOFTWARE. -->
     func(view, 'visible', @update)
   </method>
   
-  <method name="update">
+  <method name="update" invokesuper="before">
     if @canUpdate()
       # Prevent inadvertent loops
       @locked = true

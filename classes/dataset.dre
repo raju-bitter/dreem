@@ -100,7 +100,7 @@ SOFTWARE. -->
           # console.log('data', @name, @data)
       </handler>
       <handler event="onurl" method="loadURL"></handler>
-      <method name="loadURL" args="url">
+      <method name="loadURL" args="url" invokesuper="before">
         # console.log('loading url', url)
         type = 'json'
         if (url.indexOf('callback=?') != -1)
@@ -115,7 +115,7 @@ SOFTWARE. -->
           @setAttribute('data', data)
         );
       </method>
-      <method name="updateData" args="path, data">
+      <method name="updateData" args="path, data" invokesuper="before">
         # find the scope and property to be updated
         re = /\/([^\/]+)$/
         property = path.match(re)

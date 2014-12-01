@@ -67,7 +67,7 @@ SOFTWARE. -->
       <handler event="onselected" method="visualize"></handler>
 
       <!-- visualize: Show the current button state -->
-      <method name="visualize">
+      <method name="visualize" invokesuper="before">
         # Hack. Should be @inited
         return unless @realinited
         return unless @visual
@@ -88,7 +88,7 @@ SOFTWARE. -->
         <handler event="onwidth" method="handleResize"></handler>
         <handler event="onheight" method="handleResize"></handler>
 
-        <method name="handleResize">
+        <method name="handleResize" invokesuper="before">
           # Force an onwidth event in the parent to resize the button
           @parent.sendEvent('width', @parent.width)
         </method>
@@ -97,7 +97,7 @@ SOFTWARE. -->
       <handler event="onwidth" method="handleResize"></handler>
       <handler event="onheight" method="handleResize"></handler>
 
-      <method name="handleResize">
+      <method name="handleResize" invokesuper="before">
         # Custom behavior in subclasses
       </method>
 

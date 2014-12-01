@@ -10,7 +10,7 @@
      *     <replicator datapath="$topmovies/searchResponse/results[*]/movie[take(/releaseYear,/duration,/rating)]" classname="logger"></replicator>
      */-->
   <class name="logger" extends="node">
-    <method name="setAttribute" args="name, value">
+    <method name="setAttribute" args="name, value" invokesuper="before">
       console.log('setAttribute', name, value, 'on', this)
     </method>
   </class>

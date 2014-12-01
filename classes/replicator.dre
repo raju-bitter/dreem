@@ -253,7 +253,7 @@ SOFTWARE. -->
         @buildsortfunc()
         @applyData()
       </handler>
-      <method name="buildsortfunc">
+      <method name="buildsortfunc" invokesuper="before">
         if @sortfield
           sortfield = @sortfield
           sortasc = @sortasc
@@ -278,7 +278,7 @@ SOFTWARE. -->
       <handler event="ondata" method="applyData"></handler>
       <handler event="ondatapath" method="applyData"></handler>
       <handler event="ondestroy" method="clear"></handler>
-      <method name="updateData" args="data">
+      <method name="updateData" args="data" invokesuper="before">
         # remove dataset declaration
         re = /^\$([^\/]+)/
         @dataset.updateData(@datapath.replace(re, ''), data);
@@ -287,10 +287,10 @@ SOFTWARE. -->
         * @method refresh
         * Refreshes the dataset manually
         */-->
-      <method name="refresh">
+      <method name="refresh" invokesuper="before">
         this.applyData()
       </method>
-      <method name="clear">
+      <method name="clear" invokesuper="before">
         # @parent.setAttribute('display', 'none')
         if @children
           for child in @children
@@ -307,7 +307,7 @@ SOFTWARE. -->
         * @param {Object[]} accum The array of items that have been accumulated. To keep a processed item, it must be added to the accum array.
         * @returns {Object[]} The accum array. Must be returned otherwise results will be lost.
         */-->
-      <method name="applyData">
+      <method name="applyData" invokesuper="before">
         return unless @inited and @parent and @classname
         # console.log('applyData', @data, @classname, @parent, @children, @, @inited)
 
@@ -361,7 +361,7 @@ SOFTWARE. -->
         else
           @doReplication()
       </method>
-      <method name="doReplication">
+      <method name="doReplication" invokesuper="before">
         return unless @data and @parent
 
         locked = @locked

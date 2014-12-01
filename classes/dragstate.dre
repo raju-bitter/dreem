@@ -82,7 +82,7 @@ SOFTWARE. -->
           this.updatePos('y', y - this.parent.getAbsolute().y - this.starty);
         }
       </handler>
-      <method name="updatePos" args="name, val">
+      <method name="updatePos" args="name, val" invokesuper="before">
         //console.log('updatePos', name, val, this, this.updatePos)
         this.setAttribute(name, val)
       </method>

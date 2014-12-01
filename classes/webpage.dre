@@ -87,7 +87,7 @@ SOFTWARE. -->
         @createFrame()
       </handler>
 
-      <method name="createFrame">
+      <method name="createFrame" invokesuper="before">
         @sprite.el.removeChild(@iframe) if @iframe
         @iframe = document.createElement("IFRAME")
 
@@ -104,7 +104,7 @@ SOFTWARE. -->
         @sprite.el.appendChild(@iframe)
       </method>
 
-      <method name="updateFrame">
+      <method name="updateFrame" invokesuper="before">
         return if (@width == 0 || @height == 0 || !@iframe)
 
         @iframe.src = @src unless @iframe.src == @src
@@ -130,7 +130,7 @@ SOFTWARE. -->
         @sprite.el.appendChild(@iframe)
       </method>
 
-      <method name="handleResize">
+      <method name="handleResize" invokesuper="before">
         if (@iframe)
           @iframe.style.width = @width;
           @iframe.style.height = @height;

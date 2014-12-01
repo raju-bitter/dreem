@@ -179,7 +179,7 @@ SOFTWARE. -->
         @loadFromFile() if @src
       </handler>
 
-      <method name="setAttribute" args="name, value">
+      <method name="setAttribute" args="name, value" invokesuper="before">
         # If debug=true, show attributes that pass through to the svg
         debug = window.location.search.indexOf('debug') > 0
         if debug
@@ -189,7 +189,7 @@ SOFTWARE. -->
       </method>
 
 
-      <method name="show_path" args="name">
+      <method name="show_path" args="name" invokesuper="before">
         # Retrieve an svg path given its name, or index
         path = @get_path(name)
         if path and path.length > 0
@@ -199,7 +199,7 @@ SOFTWARE. -->
       </method>
 
 
-      <method name="get_path_frame" args="name, params">
+      <method name="get_path_frame" args="name, params" invokesuper="before">
         # Construct a start or stop animation state using the specified
         # path, and optional other animation parameters
 
@@ -214,7 +214,7 @@ SOFTWARE. -->
         return params
       </method>
 
-      <method name="animate_path" args="name, params">
+      <method name="animate_path" args="name, params" invokesuper="before">
         # Animate the path, as well as specified params
         return @show_path(name) if !@snap
 
@@ -238,7 +238,7 @@ SOFTWARE. -->
           )
       </method>
 
-      <method name="show_frame" args="start_path, end_path, frame, start_params, end_params">
+      <method name="show_frame" args="start_path, end_path, frame, start_params, end_params" invokesuper="before">
         # Called when animationframe changes. This can also be used to display
         # a frame between any two keyframes.
         frame = 0 if frame < 0
@@ -269,7 +269,7 @@ SOFTWARE. -->
       </method>
 
 
-      <method name="createDOM">
+      <method name="createDOM" invokesuper="before">
         # Create a div to handle resizing of the graphics
         return if @container      
 
@@ -279,7 +279,7 @@ SOFTWARE. -->
         @sprite.el.appendChild(@container)
       </method>
 
-      <method name="createSnap">
+      <method name="createSnap" invokesuper="before">
         return if @snap
         @snap = Snap()
 
@@ -312,14 +312,14 @@ SOFTWARE. -->
       </method>
 
 
-      <method name="hide_art", args="fixed">
+      <method name="hide_art", args="fixed" invokesuper="before">
         # Hide either fixed art (fixed=true or missing) or snap (false)
         fixed = true if not fixed?
         $(@container).hide() if @container and fixed
         $(@snapcontainer).hide() if @snapcontainer and not fixed
       </method>
 
-      <method name="get_path" args="name">
+      <method name="get_path" args="name" invokesuper="before">
         # Read the path information from the svg using id and then index
         return null if !@container
 
@@ -337,7 +337,7 @@ SOFTWARE. -->
         return $(elements[index])
       </method>
 
-      <method name="get_paths">
+      <method name="get_paths" invokesuper="before">
         # Get every path specified in the svg
         dom = @container
         return null if !dom
@@ -346,7 +346,7 @@ SOFTWARE. -->
         return paths
       </method>
 
-      <method name="get_bounding_box">
+      <method name="get_bounding_box" invokesuper="before">
         # Get the bounding box of all the paths
         paths = @get_paths()
         for path, index in paths
@@ -374,7 +374,7 @@ SOFTWARE. -->
 
       <handler event="onready" method="normalizeArt"></handler>
 
-      <method name="normalizeArt">
+      <method name="normalizeArt" invokesuper="before">
         return unless @container
 
         # Normalize the svg by setting width and height to 100%, and
@@ -417,7 +417,7 @@ SOFTWARE. -->
         @animate_path(@path) if @path.length > 0
       </method>
 
-      <method name="resizeArt">
+      <method name="resizeArt" invokesuper="before">
         # Resize the art, if needed, for changes in container size
 
         # Apply stretches to the static svg
@@ -439,7 +439,7 @@ SOFTWARE. -->
             svg.removeAttribute('preserveAspectRatio')
       </method>
 
-      <method name="loadInline">
+      <method name="loadInline" invokesuper="before">
         # Load inline svg
         @createDOM()
 
@@ -461,7 +461,7 @@ SOFTWARE. -->
         ), 1
       </method>
 
-      <method name="loadFromFile">
+      <method name="loadFromFile" invokesuper="before">
         # Load an svg file
         @createDOM()
 
