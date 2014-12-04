@@ -281,6 +281,7 @@
         assert.equal(1, container.scrollEventCount, 'A scroll event should have happened.');
         
         assert.equal(73, container.scrollx, 'scrollx should now be 73.');
+        assert.equal(88, container.sprite.el.scrollLeft, 'phantom testing debug');
         assert.equal((container.sprite.el.scrollLeft == 73) || (container.sprite.el.scrollLeft == 88), true, 'The scrollLeft on the dom element should now be 73 or 88 on phantomrunner.');
         assert.equal(3, container.scrolly, 'scrolly should now be 3.');
         assert.equal((container.sprite.el.scrollTop == 3) || (container.sprite.el.scrollTop == 18), true, 'The scrollTop on the dom element should now be 3 or 18 on phantomrunner.');
