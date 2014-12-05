@@ -4587,6 +4587,8 @@
 
   dr.writeCSS();
 
+  console.log('attaching onload handler to window');
+
   $(window).on('load', function() {
     console.log('window load');
     dr.initElements();

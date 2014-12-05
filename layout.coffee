@@ -3709,6 +3709,7 @@ window.dr = do ->
   ###
 
 dr.writeCSS()
+console.log('attaching onload handler to window')
 $(window).on('load', -> 
   console.log('window load')
   dr.initElements() 
