@@ -70,9 +70,11 @@ var runTest = function (file, callback) {
     exitCode = 1;
   };
   page.onInitialized = function () {
+    console.log('page.onInitialized')
     // this is executed 'after the web page is created but before a URL is loaded.
     // The callback may be used to change global objects.' ... according to the docs
     page.evaluate(function () {
+      if (window.DREEM_INITED) console.log('~~DONE~~');
       window.addEventListener('dreeminit', function (e) { console.log('~~DONE~~') }, false);
     });
     // add missing methods to phantom, specifically Function.bind(). See https://github.com/ariya/phantomjs/issues/10522
@@ -90,6 +92,7 @@ var runTest = function (file, callback) {
     out.push(msg)
 //    console.log(msg)
   };
+  console.log('opening page')
   page.open('http://127.0.0.1:8080' + path + file + '?test');
 }
 
