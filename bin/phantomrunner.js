@@ -1,6 +1,6 @@
 var fs = require('fs');
 
-var timeout = 60;
+var timeout = 200;
 var path = "/smoke/";
 var exitCode = 0;
 
@@ -52,6 +52,7 @@ var runTest = function (file, callback) {
       });
       ms = pageTimeout == null ? timeout : Number(pageTimeout.nodeValue);
     }
+    console.log('updateTimer', ms)
     if (tId) clearTimeout(tId);
     tId = setTimeout(processOutput, ms);
   }
