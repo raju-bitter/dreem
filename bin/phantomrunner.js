@@ -107,7 +107,7 @@ var runTest = function (file, callback) {
         if (window.DREEM_INITED) console.log('~~DONE~~');
       });
     }
-  }, 100);
+  }, 400);
 }
 
 var loadNext = function() {
