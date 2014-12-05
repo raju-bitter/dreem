@@ -5,5 +5,5 @@ test:
   pre:
     - python -m SimpleHTTPServer 8080:
         background: true
-    - phantomjs ./bin/phantomrunner.js 500
+    - phantomjs ./bin/phantomrunner.js
   
