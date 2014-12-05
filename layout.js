@@ -4588,6 +4588,7 @@
   dr.writeCSS();
 
   $(window).on('load', function() {
+    console.log('window load');
     dr.initElements();
     return hackstyle(true);
   });

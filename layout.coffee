@@ -3710,6 +3710,7 @@ window.dr = do ->
 
 dr.writeCSS()
 $(window).on('load', -> 
+  console.log('window load')
   dr.initElements() 
   # listen for jQuery style changes
   hackstyle(true)
