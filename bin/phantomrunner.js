@@ -92,7 +92,7 @@ var runTest = function (file, callback) {
     page.injectJs('./lib/es5-shim.min.js');
     
     setTimeout(function() {
-      console.log('rendering screengrab');
+      console.log('rendering screengrab for ' + file);
       page.render(screenGrabDir + '/screengrab_' + file + '.png');
     }, 500);
   };
