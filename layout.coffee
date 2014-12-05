@@ -22,6 +22,8 @@
 # SOFTWARE.
 ###
 
+console.log('here in layout.coffee')
+
 # Maps attribute names to CSS style names.
 stylemap =
   x: 'marginLeft'
