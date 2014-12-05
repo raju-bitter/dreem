@@ -89,7 +89,7 @@ var runTest = function (file, callback) {
       window.addEventListener('dreeminit', function (e) { console.log('~~DONE~~') }, false);
     });
     // add missing methods to phantom, specifically Function.bind(). See https://github.com/ariya/phantomjs/issues/10522
-    //page.injectJs('./lib/es5-shim.min.js');
+    page.injectJs('./lib/es5-shim.min.js');
     
     setTimeout(function() {
       console.log('rendering screengrab for ' + file);
