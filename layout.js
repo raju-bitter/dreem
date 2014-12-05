@@ -2676,8 +2676,10 @@
         return window.dispatchEvent(event);
       };
       initFromElement = function(el) {
+        console.log('initFromElement');
         el.style.display = 'none';
         return findAutoIncludes(el, function() {
+          console.log('findAutoIncludes returned');
           el.style.display = null;
           initElement(el);
           _initConstraints();

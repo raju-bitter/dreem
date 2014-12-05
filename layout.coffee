@@ -2107,8 +2107,10 @@ window.dr = do ->
 
     # initialize a top-level view element
     initFromElement = (el) ->
+      console.log('initFromElement')
       el.style.display = 'none'
       findAutoIncludes(el, () ->
+        console.log('findAutoIncludes returned')
         el.style.display = null
         initElement(el)
         # register constraints last
