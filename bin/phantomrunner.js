@@ -62,6 +62,7 @@ var runTest = function (file, callback) {
   }
   var page = require('webpage').create();
   page.onError = function(msg, trace) {
+    console.log('page.onError')
     var msgStack = ['ERROR: ' + msg];
     if (trace && trace.length) {
       msgStack.push('TRACE:');
@@ -78,10 +79,10 @@ var runTest = function (file, callback) {
     //console.log('page.onInitialized')
     // this is executed 'after the web page is created but before a URL is loaded.
     // The callback may be used to change global objects.' ... according to the docs
-//    page.evaluate(function () {
-//      if (window.DREEM_INITED) console.log('~~DONE~~');
-//      window.addEventListener('dreeminit', function (e) { console.log('~~DONE~~') }, false);
-//    });
+    page.evaluate(function () {
+      if (window.DREEM_INITED) console.log('~~DONE~~');
+      window.addEventListener('dreeminit', function (e) { console.log('~~DONE~~') }, false);
+    });
     // add missing methods to phantom, specifically Function.bind(). See https://github.com/ariya/phantomjs/issues/10522
     page.injectJs('./lib/es5-shim.min.js');
   };
@@ -100,13 +101,13 @@ var runTest = function (file, callback) {
 
   didCallOnInitialized = false
   
-  checkerIntervalId = setInterval(function() {
-    console.log('checking DREEM_INITED, didCallOnInitialized is', didCallOnInitialized)
-    page.evaluate(function () {
-      console.log('checking DREEM_INITED', window.DREEM_INITED);
-      if (window.DREEM_INITED) console.log('~~DONE~~');
-    });
-  }, 400);
+//  checkerIntervalId = setInterval(function() {
+//    console.log('checking DREEM_INITED, didCallOnInitialized is', didCallOnInitialized)
+//    page.evaluate(function () {
+//      console.log('checking DREEM_INITED', window.DREEM_INITED);
+//      if (window.DREEM_INITED) console.log('~~DONE~~');
+//    });
+//  }, 400);
   
   console.log('opening page')
   page.open('http://127.0.0.1:8080' + path + file + '?test');
