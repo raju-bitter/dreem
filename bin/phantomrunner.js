@@ -79,7 +79,8 @@ var runTest = function (file, callback) {
     exitCode = 1;
   };
   page.onInitialized = function () {
-    didCallOnInitialized = true
+    console.log('page.onInitialized');
+    didCallOnInitialized = true;
     //console.log('page.onInitialized')
     // this is executed 'after the web page is created but before a URL is loaded.
     // The callback may be used to change global objects.' ... according to the docs
@@ -91,6 +92,7 @@ var runTest = function (file, callback) {
     page.injectJs('./lib/es5-shim.min.js');
     
     setTimeout(function() {
+      console.log('rendering screengrab');
       page.render(screenGrabDir + '/screengrab_' + file + '.png');
     }, 500);
   };
