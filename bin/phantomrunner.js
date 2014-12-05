@@ -95,7 +95,7 @@ var runTest = function (file, callback) {
       return;
     }
     out.push(msg)
-//    console.log(msg)
+    console.log(msg)
   };
 
   didCallOnInitialized = false
