@@ -19,6 +19,8 @@ for(var i = 0; i < list.length; i++){
   }
 }
 
+var didCallOnInitialized = false;
+
 var runTest = function (file, callback) {
   var out = []
   var tId;
@@ -70,6 +72,7 @@ var runTest = function (file, callback) {
     exitCode = 1;
   };
   page.onInitialized = function () {
+    didCallOnInitialized = true
     console.log('page.onInitialized')
     // this is executed 'after the web page is created but before a URL is loaded.
     // The callback may be used to change global objects.' ... according to the docs
@@ -94,6 +97,17 @@ var runTest = function (file, callback) {
   };
   console.log('opening page')
   page.open('http://127.0.0.1:8080' + path + file + '?test');
+
+  didCallOnInitialized = false
+  setTimeout(function() {
+    console.log('checking didCallOnInitialized', didCallOnInitialized);
+    if (!didCallOnInitialized) {
+      console.log('======= oninitialized not called, checking dreeminited')
+      page.evaluate(function () {
+        if (window.DREEM_INITED) console.log('~~DONE~~');
+      });
+    }
+  }, 100);
 }
 
 var loadNext = function() {
