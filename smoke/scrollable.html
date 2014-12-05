@@ -286,8 +286,8 @@
         assert.equal((container.sprite.el.scrollTop == 3) || (container.sprite.el.scrollTop == 18) || (container.sprite.el.scrollTop == 19), true, 'The scrollTop on the dom element should now be 3 or 18 on phantomrunner.');
         
         var event = container.lastScrollEvent;
-        assert.equal((event.scrollx == 73) || (event.scrollx == 88), true, 'The scrollx property of the scroll event should be 73 or 88 on phantomrunner.');
-        assert.equal((event.scrolly == 3) || (event.scrolly == 18), true, 'The scrolly property of the scroll event should be 3 or 18 on phantomrunner.');
+        assert.equal((event.scrollx == 73) || (event.scrollx == 88) || (event.scrollx == 89), true, 'The scrollx property of the scroll event should be 73 or 88 on phantomrunner.');
+        assert.equal((event.scrolly == 3) || (event.scrolly == 18) || (event.scrolly == 19), true, 'The scrolly property of the scroll event should be 3 or 18 on phantomrunner.');
         assert.equal(179, event.scrollwidth, 'The scrollwidth property of the scroll event should be 179.');
         assert.equal(99, event.scrollheight, 'The scrollheight property of the scroll event should be 99.');
         
