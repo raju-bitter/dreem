@@ -12,6 +12,7 @@ if (args[1]) {
 
 var env = system.env;
 console.log('CIRCLE_ARTIFACTS:', env['CIRCLE_ARTIFACTS']);
+var screenGrabDir = env['CIRCLE_ARTIFACTS'] || '.';
 
 var list = fs.list("." + path);
 var files = [];
@@ -89,9 +90,9 @@ var runTest = function (file, callback) {
     // add missing methods to phantom, specifically Function.bind(). See https://github.com/ariya/phantomjs/issues/10522
     page.injectJs('./lib/es5-shim.min.js');
     
-//    setTimeout(function() {
-//      page.render('screengrab_' + file + '.png');
-//    }, 500);
+    setTimeout(function() {
+      page.render(screenGrabDir + '/screengrab_' + file + '.png');
+    }, 500);
   };
   page.onResourceError = function(resourceError) {
     console.log('RESOURCE ERROR: ' + resourceError.errorString + ', URL: ' + resourceError.url + ', File: ' + file);
