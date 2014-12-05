@@ -103,6 +103,7 @@ var runTest = function (file, callback) {
   checkerIntervalId = setInterval(function() {
     console.log('checking DREEM_INITED, didCallOnInitialized is', didCallOnInitialized)
     page.evaluate(function () {
+      console.log('checking DREEM_INITED', window.DREEM_INITED);
       if (window.DREEM_INITED) console.log('~~DONE~~');
     });
   }, 400);
