@@ -98,7 +98,7 @@ var loadNext = function() {
   if (file) {
     console.log("RUNNING TEST: ", file)
     runTest(file, loadNext);
-  } else {
+  } else { 
     phantom.exit(exitCode);
   }
 }
