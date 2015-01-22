@@ -1,0 +1,85 @@
+<html>
+<head>
+    <style type="text/css">
+        body {
+            font-family: 'Arial';
+            font-size: 14px;
+        }
+    </style>
+
+    <title>rhes.es - Text Component Smoke Tests</title>
+    <script type="text/javascript" src="/lib/jquery-1.9.1.min.js"></script>
+    <script type="text/javascript" src="/lib/acorn.js"></script>
+    <script type="text/javascript" src="/lib/coffee-script.js"></script>
+    <script type="text/javascript" src="/layout.js"></script>
+    <script type="text/javascript" src="/lib/chai.js"></script>
+    <script>
+        var assert = chai.assert
+    </script>
+</head>
+<body>
+<view id="all" width="100%" height="100%">
+    <spacedlayout axis="y" spacing="15"></spacedlayout>
+
+    <!-- Font styles -->
+    <text id="fonts1" width="100" height="100" underline="true" bold="true" italic="true" smallcaps="true" fontsize="128" fontfamily="'Brush Script MT', cursive" text="FONTS, BOLD ITALIC ETC." color="lightblue" bgcolor="rgba(200,0,0,0.5)">
+        <!--<handler event="oninit">-->
+            <!--assert.equal(this.sprite.el.style['font-family'], "'Brush Script MT', cursive", 'missing size style')-->
+            <!--assert.equal(this.sprite.el.style['font-size'], '128px', 'missing size style')-->
+            <!--assert.equal(this.sprite.el.style['font-weight'], 'bold', 'missing bold style')-->
+            <!--assert.equal(this.sprite.el.style['font-style'], 'italic', 'missing italic style')-->
+            <!--assert.equal(this.sprite.el.style['text-decoration'], 'underline', 'missing underline style')-->
+            <!--assert.equal(this.sprite.el.style['font-variant'], 'small-caps', 'missing smallcaps style')-->
+        <!--</handler>-->
+    </text>
+
+    <!--<text id="fonts2" width="100" height="100" fontsize="8" text="font size only" clickable="true">-->
+        <!--<handler event="oninit">-->
+            <!--assert.equal(this.sprite.el.style['font-size'], '8px', 'missing size style')-->
+        <!--</handler>-->
+    <!--</text>-->
+
+    <!--<text id="fonts3" width="100" height="100" fontfamily="cursive" text="font family only" clickable="true">-->
+        <!--<handler event="oninit">-->
+            <!--assert.equal(this.sprite.el.style['font-family'], 'cursive', 'missing size style')-->
+        <!--</handler>-->
+    <!--</text>-->
+
+    <!--&lt;!&ndash; Fontsize in pt &ndash;&gt;-->
+    <!--<text id="fonts4" width="100" height="100" fontsize="12pt" fontfamily="'Brush Script MT', cursive" text="FONTS, BOLD ITALIC ETC." color="lightblue" bgcolor="rgba(200,0,0,0.5)">-->
+        <!--<handler event="oninit">-->
+            <!--assert.equal(this.sprite.el.style['font-size'], '12px', 'fonts in pt format should be converted to pixels')-->
+        <!--</handler>-->
+    <!--</text>-->
+
+    <!--&lt;!&ndash; Default fontsize &ndash;&gt;-->
+    <!--<text id="fonts5" width="100" height="100" text="FONTS, BOLD ITALIC ETC." color="lightblue" bgcolor="rgba(200,0,0,0.5)">-->
+        <!--<handler event="oninit">-->
+            <!--assert.equal(this.sprite.el.style['font-size'], '', 'default font size')-->
+        <!--</handler>-->
+    <!--</text>-->
+
+</view>
+<!-- The MIT License (MIT)
+
+Copyright ( c ) 2014 Teem2 LLC
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE. -->
+</body>
+</html>

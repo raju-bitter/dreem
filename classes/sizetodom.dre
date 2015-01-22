@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. -->
 <!--/**
       * @class dr.sizetodom {UI Components}
-      * @extends dr.state
+      * @extends dr.mixin
       * Enables a view to size itself to the dom elements it contains. This
       * is a reversal of the standard relationship where the "model" pushes
       * changes into the DOM.
