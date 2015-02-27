@@ -18,7 +18,7 @@ test:
     - >
       if [ "${CIRCLE_BRANCH}" == "circle_sauce" ]; then
         grunt:
-          timeout: 500
+            timeout: 500
       fi
 #    - ./bin/sc -u $SAUCE_USERNAME -k $SAUCE_ACCESS_KEY -f ~/sc_ready:
 #        background: true
