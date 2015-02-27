@@ -6,8 +6,8 @@ dependencies:
     - cd server && npm install
     - cd server && DREEM_ROOT=../ node server.js:
         background: true
-    - wget https://saucelabs.com/downloads/sc-latest-linux.tar.gz
-    - tar -xzf sc-latest-linux.tar.gz
+#    - wget https://saucelabs.com/downloads/sc-latest-linux.tar.gz
+#    - tar -xzf sc-latest-linux.tar.gz
 test:
   pre:
     - python -m SimpleHTTPServer 8080:
@@ -15,13 +15,13 @@ test:
   override:
     - FIREFOX=yes bundle exec rspec
   post:
-    - ./bin/sc -u $SAUCE_USERNAME -k $SAUCE_ACCESS_KEY -f ~/sc_ready:
-        background: true
-        pwd: sc-*-linux
+#    - ./bin/sc -u $SAUCE_USERNAME -k $SAUCE_ACCESS_KEY -f ~/sc_ready:
+#        background: true
+#        pwd: sc-*-linux
     # Wait for tunnel to be ready
-    - while [ ! -e ~/sc_ready ]; do sleep 1; done
+#    - while [ ! -e ~/sc_ready ]; do sleep 1; done
     # Wait for app to be ready
-    - curl --retry 10 --retry-delay 2 -v http://localhost:8080
+#    - curl --retry 10 --retry-delay 2 -v http://localhost:8080
     # Run smoke tests
     - grunt:
         timeout: 500
