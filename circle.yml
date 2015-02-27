@@ -16,7 +16,9 @@ test:
     - FIREFOX=yes bundle exec rspec
   post:
     - >
-      if [ "${CIRCLE_BRANCH}" == "circle_sauce" ]; then grunt; fi:
+      if [ "${CIRCLE_BRANCH}" == "circle_sauce" ]; 
+        then grunt; 
+      fi:
         timeout: 500
 #    - ./bin/sc -u $SAUCE_USERNAME -k $SAUCE_ACCESS_KEY -f ~/sc_ready:
 #        background: true
