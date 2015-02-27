@@ -6,13 +6,13 @@ dependencies:
     - cd server && npm install
     - cd server && DREEM_ROOT=../ node server.js:
         background: true
-    - wget https://saucelabs.com/downloads/sc-latest-linux.tar.gz
-    - tar -xzf sc-latest-linux.tar.gz
 test:
   pre:
     - python -m SimpleHTTPServer 8080:
         background: true
   override:
+    - wget https://saucelabs.com/downloads/sc-latest-linux.tar.gz
+    - tar -xzf sc-latest-linux.tar.gz
     - ./bin/sc -u $SAUCE_USERNAME -k $SAUCE_ACCESS_KEY -f ~/sc_ready:
         background: true
         pwd: sc-*-linux
