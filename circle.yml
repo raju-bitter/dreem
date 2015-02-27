@@ -14,12 +14,12 @@ test:
         background: true
   override:
     - FIREFOX=yes bundle exec rspec
-  post:
-    - >
-      if [ "${CIRCLE_BRANCH}" == "circle_sauce" ]; 
-        then grunt; 
-      fi:
-        timeout: 500
+#  post:
+#    - >
+#      if [ "${CIRCLE_BRANCH}" == "circle_sauce" ]; 
+#        then grunt; 
+#      fi:
+#        timeout: 500
 #    - ./bin/sc -u $SAUCE_USERNAME -k $SAUCE_ACCESS_KEY -f ~/sc_ready:
 #        background: true
 #        pwd: sc-*-linux
@@ -28,8 +28,8 @@ test:
     # Wait for app to be ready
 #    - curl --retry 10 --retry-delay 2 -v http://localhost:8080
     # Run smoke tests
-#    - grunt:
-#        timeout: 500
+    - grunt:
+        timeout: 500
 #  - >
 #        if [ "${CIRCLE_BRANCH}" == "circle_sauce" ]; then
 #          ./bin/sc -u $SAUCE_USERNAME -k $SAUCE_ACCESS_KEY -f ~/sc_ready:
