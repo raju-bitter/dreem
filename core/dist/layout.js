@@ -93,7 +93,17 @@
 
   window.dr = (function() {
     var AutoPropertyLayout, COMMENT_NODE, Class, Eventable, Events, Idle, Keyboard, Layout, Module, Mouse, Node, Path, Sprite, StartEventable, State, View, Window, callOnIdle, capabilities, clone, closeTo, compiler, constraintScopes, debug, dom, eventq, exports, fcamelCase, handlerq, idle, ignoredAttributes, instantiating, knownstyles, matchEvent, matchPercent, mixOf, moduleKeywords, mouseEvents, noop, querystring, rdashAlpha, showWarnings, specialtags, ss, ss2, starttime, tagPackageSeparator, test, triggerlock, warnings, _initConstraints, _processAttrs;
+    ignoredAttributes = {
+      parent: true,
+      id: true,
+      name: true,
+      "extends": true,
+      type: true,
+      scriptincludes: true
+    };
+    specialtags = ['handler', 'method', 'attribute', 'setter', 'include'];
     COMMENT_NODE = window.Node.COMMENT_NODE;
+    tagPackageSeparator = '-';
     noop = function() {};
     closeTo = function(a, b, epsilon) {
       epsilon || (epsilon = 0.01);
@@ -123,6 +133,39 @@
       return Mixed;
     };
     matchPercent = /%$/;
+    matchEvent = /^on(.+)/;
+    querystring = window.location.search;
+    debug = querystring.indexOf('debug') > 0;
+    test = querystring.indexOf('test') > 0;
+    capabilities = {
+      localStorage: (function() {
+        var e, mod;
+        mod = 'dr';
+        try {
+          localStorage.setItem(mod, mod);
+          localStorage.removeItem(mod);
+          return true;
+        } catch (_error) {
+          e = _error;
+          return false;
+        }
+      })(),
+      touch: 'ontouchstart' in window || 'onmsgesturechange' in window,
+      camelcss: navigator.userAgent.toLowerCase().indexOf('firefox') > -1,
+      raf: window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame,
+      prefix: (function() {
+        var dom, pre, styles;
+        styles = window.getComputedStyle(document.documentElement, '');
+        pre = (Array.prototype.slice.call(styles).join('').match(/-(moz|webkit|ms)-/) || (styles.OLink === '' && ['', 'o']))[1];
+        dom = 'WebKit|Moz|MS|O'.match(new RegExp('(' + pre + ')', 'i'))[1];
+        return {
+          dom: dom,
+          lowercase: pre,
+          css: '-' + pre + '-',
+          js: pre[0].toUpperCase() + pre.substr(1)
+        };
+      })()
+    };
 
     /**
      * @class Events
@@ -343,14 +386,6 @@
       return Module;
 
     })();
-    ignoredAttributes = {
-      parent: true,
-      id: true,
-      name: true,
-      "extends": true,
-      type: true,
-      scriptincludes: true
-    };
 
     /**
      * @class Eventable {Core Dreem}
@@ -612,38 +647,6 @@
       return Eventable;
 
     })(Module);
-    capabilities = {
-      localStorage: (function() {
-        var e, mod;
-        mod = 'dr';
-        try {
-          localStorage.setItem(mod, mod);
-          localStorage.removeItem(mod);
-          return true;
-        } catch (_error) {
-          e = _error;
-          return false;
-        }
-      })(),
-      touch: 'ontouchstart' in window || 'onmsgesturechange' in window,
-      camelcss: navigator.userAgent.toLowerCase().indexOf('firefox') > -1,
-      raf: window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame,
-      prefix: (function() {
-        var dom, pre, styles;
-        styles = window.getComputedStyle(document.documentElement, '');
-        pre = (Array.prototype.slice.call(styles).join('').match(/-(moz|webkit|ms)-/) || (styles.OLink === '' && ['', 'o']))[1];
-        dom = 'WebKit|Moz|MS|O'.match(new RegExp('(' + pre + ')', 'i'))[1];
-        return {
-          dom: dom,
-          lowercase: pre,
-          css: '-' + pre + '-',
-          js: pre[0].toUpperCase() + pre.substr(1)
-        };
-      })()
-    };
-    querystring = window.location.search;
-    debug = querystring.indexOf('debug') > 0;
-    test = querystring.indexOf('test') > 0;
     compiler = (function() {
       var cacheData, cacheKey, compile, compileCache, compiledebug, exports, findBindings, nocache, scriptCache, strict, transform, usecache;
       nocache = querystring.indexOf('nocache') > 0;
@@ -3483,9 +3486,9 @@
       document.body.insertBefore(pre, document.body.firstChild);
       return console.error(out);
     };
-    specialtags = ['handler', 'method', 'attribute', 'setter', 'include'];
-    matchEvent = /^on(.+)/;
-    tagPackageSeparator = '-';
+    window.onerror = function(e) {
+      return showWarnings(["" + (e.toString()) + ". Try running in debug mode for more info. " + window.location.href + (querystring ? '&' : '?') + "debug"]);
+    };
     dom = (function() {
       var builtinTags, checkRequiredAttributes, exports, findAutoIncludes, flattenattributes, getChildElements, htmlDecode, initAllElements, initElement, initFromElement, processSpecialTags, requiredAttributes, sendInit, writeCSS;
       flattenattributes = function(namednodemap) {
@@ -5096,6 +5099,44 @@
       return Path;
 
     })();
+    StartEventable = (function(_super) {
+      __extends(StartEventable, _super);
+
+      function StartEventable() {
+        return StartEventable.__super__.constructor.apply(this, arguments);
+      }
+
+      StartEventable.prototype.register = function(ev, callback) {
+        StartEventable.__super__.register.apply(this, arguments);
+        if (this.startEventTest()) {
+          return this.startEvent();
+        }
+      };
+
+      StartEventable.prototype.unregister = function(ev, callback) {
+        StartEventable.__super__.unregister.apply(this, arguments);
+        if (!this.startEventTest()) {
+          return this.stopEvent();
+        }
+      };
+
+      StartEventable.prototype.startEvent = function(event) {
+        if (this.eventStarted) {
+          return;
+        }
+        return this.eventStarted = true;
+      };
+
+      StartEventable.prototype.stopEvent = function(event) {
+        if (!this.eventStarted) {
+          return;
+        }
+        return this.eventStarted = false;
+      };
+
+      return StartEventable;
+
+    })(Eventable);
     starttime = Date.now();
     idle = (function() {
       var doTick, requestAnimationFrame, tickEvents, ticking;
@@ -5161,44 +5202,6 @@
         };
       }
     })();
-    StartEventable = (function(_super) {
-      __extends(StartEventable, _super);
-
-      function StartEventable() {
-        return StartEventable.__super__.constructor.apply(this, arguments);
-      }
-
-      StartEventable.prototype.register = function(ev, callback) {
-        StartEventable.__super__.register.apply(this, arguments);
-        if (this.startEventTest()) {
-          return this.startEvent();
-        }
-      };
-
-      StartEventable.prototype.unregister = function(ev, callback) {
-        StartEventable.__super__.unregister.apply(this, arguments);
-        if (!this.startEventTest()) {
-          return this.stopEvent();
-        }
-      };
-
-      StartEventable.prototype.startEvent = function(event) {
-        if (this.eventStarted) {
-          return;
-        }
-        return this.eventStarted = true;
-      };
-
-      StartEventable.prototype.stopEvent = function(event) {
-        if (!this.eventStarted) {
-          return;
-        }
-        return this.eventStarted = false;
-      };
-
-      return StartEventable;
-
-    })(Eventable);
 
     /**
      * @class dr.idle {Util}
@@ -5625,9 +5628,6 @@
       return Keyboard;
 
     })(Eventable);
-    window.onerror = function(e) {
-      return showWarnings(["" + (e.toString()) + ". Try running in debug mode for more info. " + window.location.href + (querystring ? '&' : '?') + "debug"]);
-    };
 
     /**
      * @class dr {Core Dreem}
