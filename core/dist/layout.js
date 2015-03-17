@@ -3709,7 +3709,7 @@
           var el, url, _ref;
           if (!fileloaded['skin']) {
             fileloaded['skin'] = true;
-            loadInclude("/classes/skin.dre");
+            loadInclude("/dreem/classes/skin.dre");
           }
           _ref = findIncludeURLs();
           for (url in _ref) {
@@ -3734,7 +3734,7 @@
               el = _ref1[name];
               fileloaded[name] = true;
               if (name) {
-                loadInclude("/classes/" + name.split(tagPackageSeparator).join('/') + ".dre", el);
+                loadInclude("/dreem/classes/" + name.split(tagPackageSeparator).join('/') + ".dre", el);
               }
             }
             $.when.apply($, filerequests).done(function() {

@@ -3726,7 +3726,7 @@
           var el, url, _ref;
           if (!fileloaded[&#39;skin&#39;]) {
             fileloaded[&#39;skin&#39;] = true;
-            loadInclude(&quot;/classes/skin.dre&quot;);
+            loadInclude(&quot;/dreem/classes/skin.dre&quot;);
           }
           _ref = findIncludeURLs();
           for (url in _ref) {
@@ -3751,7 +3751,7 @@
               el = _ref1[name];
               fileloaded[name] = true;
               if (name) {
-                loadInclude(&quot;/classes/&quot; + name.split(tagPackageSeparator).join(&#39;/&#39;) + &quot;.dre&quot;, el);
+                loadInclude(&quot;/dreem/classes/&quot; + name.split(tagPackageSeparator).join(&#39;/&#39;) + &quot;.dre&quot;, el);
               }
             }
             $.when.apply($, filerequests).done(function() {
