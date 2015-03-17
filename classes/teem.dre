@@ -24,7 +24,7 @@ SOFTWARE. -->
      * @extends dr.node
      * Connects to the shared event bus. When data is sent with a given type, a corresponding event is sent. For example, send('blah', {}) sends data with the 'blah' type, other shims will receive the object via an 'onblah' event.
      */-->
-    <class name="teem" extends="node" scriptincludes="/primus/primus.io.js" scriptincludeserror="In order to use dr.teem, you need to be running the Teem server">
+    <class name="teem" extends="node" scriptincludes="/dreem/primus/primus.io.js" scriptincludeserror="In order to use dr.teem, you need to be running the Teem server">
       <!--/**
         * @attribute {Number} [pingtime=5000]
         * The frequency used to ping to the server

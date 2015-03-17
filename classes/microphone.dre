@@ -25,7 +25,7 @@ SOFTWARE. -->
  * Enables audio capture from the microphone device.
  *
  */-->
-<class name="microphone" type="coffee" clickable="true" clip="true" scriptincludes="/lib/audiorecorder/js/recorderjs/recorder.js, /lib/filesaver/FileSaver.min.js">
+<class name="microphone" type="coffee" clickable="true" clip="true" scriptincludes="/dreem/lib/audiorecorder/js/recorderjs/recorder.js, /dreem/lib/filesaver/FileSaver.min.js">
   
   <!--/**
     * @attribute {Number} fftsize
