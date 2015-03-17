@@ -3771,7 +3771,7 @@
                 View.prototype.enumfalse(View.prototype.keys());
                 Layout.prototype.enumfalse(Layout.prototype.keys());
                 State.prototype.enumfalse(State.prototype.keys());
-                loadScript('/dreem/lib/animator.js', callback, 'Missing /lib/animator.js');
+                loadScript('/dreem/lib/animator.js', callback, 'Missing /dreem/lib/animator.js');
                 _ref2 = jqel.find('[scriptincludes]');
                 _results = [];
                 for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
