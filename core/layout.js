@@ -3758,7 +3758,7 @@
                 loadIncludes(callback);
                 return;
               }
-              oneurl = '/lib/one_base.js';
+              oneurl = '/dreem/lib/one_base.js';
               return $.ajax({
                 dataType: "script",
                 cache: true,
